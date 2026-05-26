@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String
+  role              UserRole           @default(STUDENT)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roadmaps          Roadmap[]
+  assessmentResults AssessmentResult[]
+  mentorProfile     Mentor?
+}
+
+model Career {
+  id                String             @id @default(cuid())
+  title             String
+  description       String
+  outlook           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roadmaps          Roadmap[]
+  assessmentResults AssessmentResult[]
+  careerSkills      CareerSkill[]
+}
+
+model Skill {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  careerSkills  CareerSkill[]
+  roadmapSkills RoadmapSkill[]
+}
+
+model Roadmap {
+  id            String         @id @default(cuid())
+  title         String
+  summary       String?
+  userId        String
+  careerId      String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id])
+  career        Career         @relation(fields: [careerId], references: [id])
+  roadmapSkills RoadmapSkill[]
+}
+
+model Mentor {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  headline  String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AssessmentResult {
+  id        String   @id @default(cuid())
+  userId    String
+  careerId  String
+  score     Float
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  career    Career   @relation(fields: [careerId], references: [id])
+}
+
+model CareerSkill {
+  id       String @id @default(cuid())
+  careerId String
+  skillId  String
+  level    Int    @default(1)
+  career   Career @relation(fields: [careerId], references: [id])
+  skill    Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([careerId, skillId])
+}
+
+model RoadmapSkill {
+  id          String  @id @default(cuid())
+  roadmapId   String
+  skillId     String
+  targetLevel Int     @default(1)
+  progress    Int     @default(0)
+  roadmap     Roadmap @relation(fields: [roadmapId], references: [id])
+  skill       Skill   @relation(fields: [skillId], references: [id])
+
+  @@unique([roadmapId, skillId])
+}
