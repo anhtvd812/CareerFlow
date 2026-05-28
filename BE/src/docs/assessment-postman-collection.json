@@ -1,0 +1,712 @@
+{
+  "info": {
+    "name": "CareerFlow Assessment Module API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for assessment and auth endpoints."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": "<JWT_TOKEN>"
+    },
+    {
+      "key": "name",
+      "value": "Demo User"
+    },
+    {
+      "key": "email",
+      "value": "demo@careerflow.local"
+    },
+    {
+      "key": "password",
+      "value": "demo_password"
+    },
+    {
+      "key": "assessmentId",
+      "value": "asmt_core_it"
+    },
+    {
+      "key": "userId",
+      "value": "user_demo"
+    },
+    {
+      "key": "resultId",
+      "value": "result_123"
+    },
+    {
+      "key": "attemptId",
+      "value": "attempt_123"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"user\": {\n    \"id\": \"user_123\",\n    \"name\": \"Demo User\",\n    \"email\": \"demo@careerflow.local\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "register"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"message\": \"Email already exists.\",\n  \"code\": \"EMAIL_ALREADY_EXISTS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"token\": \"<JWT_TOKEN>\",\n  \"user\": {\n    \"id\": \"user_123\",\n    \"name\": \"Demo User\",\n    \"email\": \"demo@careerflow.local\",\n    \"role\": \"STUDENT\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "login"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Invalid email or password.\",\n  \"code\": \"INVALID_CREDENTIALS\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "logout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Logged out.\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "auth", "logout"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Missing authentication token.\",\n  \"code\": \"AUTH_REQUIRED\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "List Assessments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"assessments\": [\n    {\n      \"id\": \"asmt_core_it\",\n      \"title\": \"Core IT Foundations\",\n      \"description\": \"Baseline assessment covering problem solving, theory, and practical skills.\",\n      \"questionCount\": 4\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/{{assessmentId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "{{assessmentId}}", "questions"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/{{assessmentId}}/questions",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "{{assessmentId}}", "questions"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"asmt_core_it\",\n  \"title\": \"Core IT Foundations\",\n  \"description\": \"Baseline assessment covering problem solving, theory, and practical skills.\",\n  \"questions\": [\n    {\n      \"id\": \"q1\",\n      \"prompt\": \"Which data structure follows LIFO ordering?\",\n      \"type\": \"MULTIPLE_CHOICE\",\n      \"weight\": 3,\n      \"skillCategory\": {\n        \"id\": \"cat_problem_solving\",\n        \"name\": \"Problem Solving\"\n      },\n      \"choices\": [\n        {\n          \"id\": \"c1\",\n          \"label\": \"Queue\",\n          \"value\": \"queue\"\n        },\n        {\n          \"id\": \"c2\",\n          \"label\": \"Stack\",\n          \"value\": \"stack\"\n        }\n      ]\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Submit Assessment (Deprecated)",
+          "description": "Deprecated: use attempt-based flow instead.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "submit"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assessmentId\": \"{{assessmentId}}\",\n  \"userId\": \"{{userId}}\",\n  \"answers\": [\n    { \"questionId\": \"q1\", \"choiceId\": \"c2\" },\n    { \"questionId\": \"q2\", \"choiceId\": \"c5\" },\n    { \"questionId\": \"q3\", \"answerText\": \"npm\" },\n    { \"questionId\": \"q4\", \"answerText\": \"Representational State Transfer\" }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/submit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "submit"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"id\": \"result_123\",\n  \"assessment\": {\n    \"id\": \"asmt_core_it\",\n    \"title\": \"Core IT Foundations\"\n  },\n  \"userId\": \"user_demo\",\n  \"classification\": {\n    \"id\": \"class_strong_problem_solver\",\n    \"name\": \"Strong Problem Solver\",\n    \"description\": \"High analytical scores with solid overall performance.\"\n  },\n  \"scores\": {\n    \"totalScore\": 10,\n    \"maxScore\": 10,\n    \"percentage\": 100,\n    \"correctCount\": 4,\n    \"incorrectCount\": 0\n  },\n  \"summary\": \"Strong Problem Solver with 100% overall score.\",\n  \"categoryScores\": [\n    {\n      \"id\": \"cat_problem_solving\",\n      \"name\": \"Problem Solving\",\n      \"score\": 3,\n      \"maxScore\": 3,\n      \"percentage\": 100\n    }\n  ],\n  \"answers\": [\n    {\n      \"questionId\": \"q1\",\n      \"prompt\": \"Which data structure follows LIFO ordering?\",\n      \"type\": \"MULTIPLE_CHOICE\",\n      \"selectedChoice\": {\n        \"id\": \"c2\",\n        \"label\": \"Stack\",\n        \"value\": \"stack\"\n      },\n      \"answerText\": null,\n      \"isCorrect\": true,\n      \"score\": 3\n    }\n  ],\n  \"createdAt\": \"2026-05-28T10:00:00.000Z\"\n}"
+            },
+            {
+              "name": "400 Validation Error",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/submit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "submit"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"message\": \"Missing answers for some questions.\",\n  \"code\": \"VALIDATION_ERROR\",\n  \"details\": {\n    \"missingQuestionIds\": [\"q3\"]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Assessment Result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/results/{{resultId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "results", "{{resultId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/results/{{resultId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "results", "{{resultId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"result_123\",\n  \"assessment\": {\n    \"id\": \"asmt_core_it\",\n    \"title\": \"Core IT Foundations\"\n  },\n  \"userId\": \"user_demo\",\n  \"classification\": null,\n  \"scores\": {\n    \"totalScore\": 3,\n    \"maxScore\": 10,\n    \"percentage\": 30,\n    \"correctCount\": 1,\n    \"incorrectCount\": 2\n  },\n  \"summary\": \"Assessment completed with 30% overall score.\",\n  \"categoryScores\": [],\n  \"answers\": [],\n  \"createdAt\": \"2026-05-28T10:00:00.000Z\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/results/{{resultId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "results", "{{resultId}}"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"message\": \"Assessment result not found.\",\n  \"code\": \"RESULT_NOT_FOUND\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Classifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/classifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "classifications"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/classifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "classifications"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"classifications\": [\n    {\n      \"id\": \"class_strong_problem_solver\",\n      \"name\": \"Strong Problem Solver\",\n      \"description\": \"High analytical scores with solid overall performance.\",\n      \"isDefault\": false,\n      \"rules\": [\n        {\n          \"id\": \"rule_strong_problem_solver\",\n          \"assessment\": {\n            \"id\": \"asmt_core_it\",\n            \"title\": \"Core IT Foundations\"\n          },\n          \"priority\": 1,\n          \"minPercentage\": 80,\n          \"maxPercentage\": null,\n          \"minCorrect\": null,\n          \"maxIncorrect\": null,\n          \"minCategoryPercentages\": {\n            \"cat_problem_solving\": 0.8\n          },\n          \"maxCategoryPercentages\": null\n        }\n      ]\n    }\n  ]\n}"
+            },
+            {
+              "name": "500 Server Error",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/classifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "classifications"]
+                }
+              },
+              "status": "Internal Server Error",
+              "code": 500,
+              "body": "{\n  \"message\": \"Internal server error.\",\n  \"code\": \"INTERNAL_SERVER_ERROR\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Attempts",
+      "item": [
+        {
+          "name": "Start Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/{{assessmentId}}/attempts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "{{assessmentId}}", "attempts"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/{{assessmentId}}/attempts",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "{{assessmentId}}", "attempts"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"attempt\": {\n    \"id\": \"attempt_123\",\n    \"assessmentId\": \"asmt_core_it\",\n    \"userId\": \"user_demo\",\n    \"status\": \"IN_PROGRESS\",\n    \"startedAt\": \"2026-05-28T10:00:00.000Z\",\n    \"completedAt\": null,\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n  },\n  \"assessment\": {\n    \"id\": \"asmt_core_it\",\n    \"title\": \"Core IT Foundations\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Save Attempt",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/attempts/{{attemptId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "attempts", "{{attemptId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    { \"questionId\": \"q1\", \"choiceId\": \"c2\" },\n    { \"questionId\": \"q3\", \"answerText\": \"npm\" }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/attempts/{{attemptId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "attempts", "{{attemptId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"attempt\": {\n    \"id\": \"attempt_123\",\n    \"assessmentId\": \"asmt_core_it\",\n    \"userId\": \"user_demo\",\n    \"status\": \"IN_PROGRESS\",\n    \"startedAt\": \"2026-05-28T10:00:00.000Z\",\n    \"completedAt\": null,\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:05:00.000Z\"\n  },\n  \"savedCount\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "Submit Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/assessments/attempts/{{attemptId}}/submit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "assessments", "attempts", "{{attemptId}}", "submit"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/assessments/attempts/{{attemptId}}/submit",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "assessments", "attempts", "{{attemptId}}", "submit"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"attempt\": {\n    \"id\": \"attempt_123\",\n    \"assessmentId\": \"asmt_core_it\",\n    \"userId\": \"user_demo\",\n    \"status\": \"SUBMITTED\",\n    \"startedAt\": \"2026-05-28T10:00:00.000Z\",\n    \"completedAt\": \"2026-05-28T10:10:00.000Z\",\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:10:00.000Z\"\n  },\n  \"result\": {\n    \"id\": \"result_123\",\n    \"assessment\": {\n      \"id\": \"asmt_core_it\",\n      \"title\": \"Core IT Foundations\"\n    },\n    \"userId\": \"user_demo\",\n    \"classification\": null,\n    \"scores\": {\n      \"totalScore\": 3,\n      \"maxScore\": 10,\n      \"percentage\": 30,\n      \"correctCount\": 1,\n      \"incorrectCount\": 2\n    },\n    \"summary\": \"Assessment completed with 30% overall score.\",\n    \"categoryScores\": [],\n    \"answers\": [],\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tests",
+      "item": [
+        {
+          "name": "Start Test Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tests/{{assessmentId}}/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tests", "{{assessmentId}}", "start"]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/tests/{{assessmentId}}/start",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "tests", "{{assessmentId}}", "start"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"attempt\": {\n    \"id\": \"attempt_123\",\n    \"assessmentId\": \"asmt_core_it\",\n    \"userId\": \"user_demo\",\n    \"status\": \"IN_PROGRESS\",\n    \"startedAt\": \"2026-05-28T10:00:00.000Z\",\n    \"completedAt\": null,\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n  },\n  \"assessment\": {\n    \"id\": \"asmt_core_it\",\n    \"title\": \"Core IT Foundations\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get User Assessment History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/assessments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}", "assessments"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{userId}}/assessments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{userId}}", "assessments"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"userId\": \"user_demo\",\n  \"results\": [\n    {\n      \"id\": \"result_123\",\n      \"assessment\": {\n        \"id\": \"asmt_core_it\",\n        \"title\": \"Core IT Foundations\"\n      },\n      \"userId\": \"user_demo\",\n      \"classification\": null,\n      \"scores\": {\n        \"totalScore\": 3,\n        \"maxScore\": 10,\n        \"percentage\": 30,\n        \"correctCount\": 1,\n        \"incorrectCount\": 2\n      },\n      \"summary\": \"Assessment completed with 30% overall score.\",\n      \"categoryScores\": [],\n      \"answers\": [],\n      \"createdAt\": \"2026-05-28T10:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/users/{{userId}}/assessments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "users", "{{userId}}", "assessments"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"message\": \"Missing authentication token.\",\n  \"code\": \"AUTH_REQUIRED\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

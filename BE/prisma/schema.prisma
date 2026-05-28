@@ -13,6 +13,21 @@ enum UserRole {
   ADMIN
 }
 
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TEXT
+}
+
+enum TextMatchMode {
+  EXACT
+  KEYWORD
+}
+
+enum AssessmentAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
@@ -23,14 +38,16 @@ model User {
   updatedAt         DateTime           @updatedAt
   roadmaps          Roadmap[]
   assessmentResults AssessmentResult[]
+  assessmentAnswers UserAnswer[]
+  assessmentAttempts AssessmentAttempt[]
   mentorProfile     Mentor?
 }
 
 model Career {
   id                String             @id @default(cuid())
   title             String
-  description       String
-  outlook           String?
+  description       String             @db.Text
+  outlook           String?            @db.Text
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roadmaps          Roadmap[]
@@ -41,7 +58,7 @@ model Career {
 model Skill {
   id            String         @id @default(cuid())
   name          String
-  description   String?
+  description   String?        @db.Text
   careerSkills  CareerSkill[]
   roadmapSkills RoadmapSkill[]
 }
@@ -49,7 +66,7 @@ model Skill {
 model Roadmap {
   id            String         @id @default(cuid())
   title         String
-  summary       String?
+  summary       String?        @db.Text
   userId        String
   careerId      String
   createdAt     DateTime       @default(now())
@@ -62,21 +79,195 @@ model Roadmap {
 model Mentor {
   id        String   @id @default(cuid())
   userId    String   @unique
-  headline  String?
-  bio       String?
+  headline  String?  @db.Text
+  bio       String?  @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id])
 }
 
+model Assessment {
+  id                  String                        @id @default(cuid())
+  title               String                        @db.Text
+  description         String?                       @db.Text
+  isActive            Boolean                       @default(true)
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
+  questions           AssessmentQuestion[]
+  results             AssessmentResult[]
+  answers             UserAnswer[]
+  attempts            AssessmentAttempt[]
+  classificationRules AssessmentClassificationRule[]
+}
+
+model SkillCategory {
+  id            String                 @id @default(cuid())
+  name          String                 @unique
+  description   String?                @db.Text
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  questions     AssessmentQuestion[]
+  resultScores  AssessmentResultCategory[]
+}
+
+model AssessmentQuestion {
+  id               String           @id @default(cuid())
+  assessmentId     String
+  prompt           String           @db.Text
+  type             QuestionType
+  weight           Float            @default(1)
+  skillCategoryId  String?
+  textAnswer       String?          @db.Text
+  textMatchMode    TextMatchMode?   @default(KEYWORD)
+  minKeywordScore  Int?             @default(1)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  assessment       Assessment       @relation(fields: [assessmentId], references: [id])
+  skillCategory    SkillCategory?   @relation(fields: [skillCategoryId], references: [id])
+  choices          QuestionChoice[]
+  keywords         QuestionKeyword[]
+  answers          UserAnswer[]
+  attemptAnswers   AssessmentAttemptAnswer[]
+}
+
+model QuestionChoice {
+  id            String       @id @default(cuid())
+  questionId    String
+  label         String       @db.Text
+  value         String       @db.Text
+  isCorrect     Boolean      @default(false)
+  scoreWeight   Float        @default(1)
+  question      AssessmentQuestion @relation(fields: [questionId], references: [id])
+  answers       UserAnswer[]
+  attemptAnswers AssessmentAttemptAnswer[]
+}
+
+model QuestionKeyword {
+  id         String             @id @default(cuid())
+  questionId String
+  keyword    String             @db.Text
+  weight     Float              @default(1)
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id])
+}
+
 model AssessmentResult {
-  id        String   @id @default(cuid())
-  userId    String
-  careerId  String
-  score     Float
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  career    Career   @relation(fields: [careerId], references: [id])
+  id            String                    @id @default(cuid())
+  userId        String
+  assessmentId  String
+  attemptId     String?                   @unique
+  careerId      String?
+  classificationId String?
+  totalScore    Float
+  maxScore      Float
+  percentage    Float
+  correctCount  Int
+  incorrectCount Int
+  summary       String?                   @db.Text
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  user          User                      @relation(fields: [userId], references: [id])
+  assessment    Assessment                @relation(fields: [assessmentId], references: [id])
+  attempt       AssessmentAttempt?        @relation(fields: [attemptId], references: [id])
+  career        Career?                   @relation(fields: [careerId], references: [id])
+  classification Classification?          @relation(fields: [classificationId], references: [id])
+  answers       UserAnswer[]
+  categoryScores AssessmentResultCategory[]
+}
+
+model AssessmentAttempt {
+  id            String                  @id @default(cuid())
+  assessmentId  String
+  userId        String
+  status        AssessmentAttemptStatus @default(IN_PROGRESS)
+  startedAt     DateTime                @default(now())
+  completedAt   DateTime?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  assessment    Assessment              @relation(fields: [assessmentId], references: [id])
+  user          User                    @relation(fields: [userId], references: [id])
+  answers       AssessmentAttemptAnswer[]
+  result        AssessmentResult?
+
+  @@index([assessmentId])
+  @@index([userId])
+}
+
+model AssessmentAttemptAnswer {
+  id               String            @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedChoiceId String?
+  answerText       String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  attempt          AssessmentAttempt @relation(fields: [attemptId], references: [id])
+  question         AssessmentQuestion @relation(fields: [questionId], references: [id])
+  selectedChoice   QuestionChoice?   @relation(fields: [selectedChoiceId], references: [id])
+
+  @@unique([attemptId, questionId])
+}
+
+model AssessmentResultCategory {
+  id                 String            @id @default(cuid())
+  assessmentResultId String
+  skillCategoryId    String
+  score              Float
+  maxScore           Float
+  assessmentResult   AssessmentResult @relation(fields: [assessmentResultId], references: [id])
+  skillCategory      SkillCategory    @relation(fields: [skillCategoryId], references: [id])
+
+  @@unique([assessmentResultId, skillCategoryId])
+}
+
+model UserAnswer {
+  id                 String            @id @default(cuid())
+  assessmentResultId String
+  assessmentId       String
+  questionId         String
+  userId             String
+  selectedChoiceId   String?
+  answerText         String?          @db.Text
+  isCorrect          Boolean
+  score              Float
+  createdAt          DateTime          @default(now())
+  assessmentResult   AssessmentResult  @relation(fields: [assessmentResultId], references: [id])
+  assessment         Assessment        @relation(fields: [assessmentId], references: [id])
+  question           AssessmentQuestion @relation(fields: [questionId], references: [id])
+  selectedChoice     QuestionChoice?   @relation(fields: [selectedChoiceId], references: [id])
+  user               User              @relation(fields: [userId], references: [id])
+
+  @@unique([assessmentResultId, questionId])
+}
+
+model Classification {
+  id          String                        @id @default(cuid())
+  name        String                        @unique
+  description String?                       @db.Text
+  isDefault   Boolean                       @default(false)
+  createdAt   DateTime                      @default(now())
+  updatedAt   DateTime                      @updatedAt
+  rules       AssessmentClassificationRule[]
+  results     AssessmentResult[]
+}
+
+model AssessmentClassificationRule {
+  id                     String          @id @default(cuid())
+  assessmentId           String
+  classificationId       String
+  priority               Int             @default(0)
+  minPercentage          Float?
+  maxPercentage          Float?
+  minCorrect             Int?
+  maxIncorrect           Int?
+  minCategoryPercentages Json?
+  maxCategoryPercentages Json?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  assessment             Assessment      @relation(fields: [assessmentId], references: [id])
+  classification         Classification  @relation(fields: [classificationId], references: [id])
+
+  @@index([assessmentId])
+  @@index([classificationId])
 }
 
 model CareerSkill {
