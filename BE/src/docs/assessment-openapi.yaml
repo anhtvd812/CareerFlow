@@ -305,7 +305,10 @@ paths:
     post:
       tags: [Attempts]
       summary: Submit attempt
-      description: Finalize attempt, score answers, and return result.
+      description: |
+        Finalize attempt, score answers, and return result.
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
       parameters:
         - name: id
           in: path
@@ -517,6 +520,9 @@ paths:
       description: |
         Submit answers and generate a scored assessment result.
         Deprecated: prefer attempt-based flow (/api/assessments/:id/attempts and /api/assessments/attempts/:id/submit).
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
+        
         Validation rules:
         - assessmentId is required
         - answers must be a non-empty array

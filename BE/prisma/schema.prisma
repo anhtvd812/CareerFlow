@@ -44,15 +44,16 @@ model User {
 }
 
 model Career {
-  id                String             @id @default(cuid())
-  title             String
-  description       String             @db.Text
-  outlook           String?            @db.Text
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  roadmaps          Roadmap[]
-  assessmentResults AssessmentResult[]
-  careerSkills      CareerSkill[]
+  id                     String                        @id @default(cuid())
+  title                  String
+  description            String                        @db.Text
+  outlook                String?                       @db.Text
+  createdAt              DateTime                      @default(now())
+  updatedAt              DateTime                      @updatedAt
+  roadmaps               Roadmap[]
+  assessmentResults      AssessmentResult[]
+  careerSkills           CareerSkill[]
+  classificationRules    AssessmentClassificationRule[]
 }
 
 model Skill {
@@ -254,6 +255,7 @@ model AssessmentClassificationRule {
   id                     String          @id @default(cuid())
   assessmentId           String
   classificationId       String
+  careerId               String?
   priority               Int             @default(0)
   minPercentage          Float?
   maxPercentage          Float?
@@ -265,9 +267,11 @@ model AssessmentClassificationRule {
   updatedAt              DateTime        @updatedAt
   assessment             Assessment      @relation(fields: [assessmentId], references: [id])
   classification         Classification  @relation(fields: [classificationId], references: [id])
+  career                 Career?         @relation(fields: [careerId], references: [id])
 
   @@index([assessmentId])
   @@index([classificationId])
+  @@index([careerId])
 }
 
 model CareerSkill {

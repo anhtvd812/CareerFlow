@@ -8,6 +8,7 @@ import type {
 } from '@prisma/client';
 import { QuestionType, TextMatchMode } from '@prisma/client';
 import { ApiError } from '../utils/errors';
+import prisma from '../prisma/client';
 import {
   createAssessmentResult,
   createAssessmentAttempt,
@@ -21,6 +22,9 @@ import {
   listUserAssessmentResults,
   markAssessmentAttemptSubmitted,
   upsertAssessmentAttemptAnswers,
+  findExistingRoadmap,
+  createRoadmapWithSkills,
+  getRoadmapWithSkills,
 } from '../repositories/assessmentRepository';
 import type { AttemptAnswerInput, SubmitAnswerInput } from '../validators/assessmentValidators';
 
@@ -32,6 +36,7 @@ type AssessmentForScoring = Assessment & {
   })[];
   classificationRules: (AssessmentClassificationRule & {
     classification: Classification;
+    career: { id: string; title: string } | null;
   })[];
 };
 
@@ -49,6 +54,11 @@ type ScoredAnswer = {
   isCorrect: boolean;
   score: number;
   maxScore: number;
+};
+
+type ClassificationResult = {
+  classification: Classification | undefined;
+  careerId: string | null;
 };
 
 const normalizeText = (value: string) => value.trim().toLowerCase();
@@ -134,7 +144,7 @@ const computeClassification = (
   correctCount: number,
   incorrectCount: number,
   categoryPercentages: Record<string, number>,
-) => {
+): ClassificationResult => {
   const sortedRules = [...rules].sort((a, b) => a.priority - b.priority);
 
   const matchesRule = (rule: AssessmentForScoring['classificationRules'][number]) => {
@@ -172,10 +182,17 @@ const computeClassification = (
 
   const matchedRule = sortedRules.find(matchesRule);
   if (matchedRule) {
-    return matchedRule.classification;
+    return {
+      classification: matchedRule.classification,
+      careerId: matchedRule.career?.id ?? null,
+    };
   }
 
-  return rules.find((rule) => rule.classification.isDefault)?.classification;
+  const defaultRule = rules.find((rule) => rule.classification.isDefault);
+  return {
+    classification: defaultRule?.classification,
+    careerId: defaultRule?.career?.id ?? null,
+  };
 };
 
 const buildSummary = (classification: Classification | undefined, percentage: number) => {
@@ -366,7 +383,7 @@ export const submitAssessment = async (params: {
     categoryPercentages,
   );
 
-  const summary = buildSummary(classification, percentage);
+  const summary = buildSummary(classification.classification, percentage);
 
   const result = await createAssessmentResult({
     user: {
@@ -386,10 +403,17 @@ export const submitAssessment = async (params: {
           },
         }
       : undefined,
-    classification: classification
+    classification: classification.classification
       ? {
           connect: {
-            id: classification.id,
+            id: classification.classification.id,
+          },
+        }
+      : undefined,
+    career: classification.careerId
+      ? {
+          connect: {
+            id: classification.careerId,
           },
         }
       : undefined,
@@ -418,6 +442,20 @@ export const submitAssessment = async (params: {
       })),
     },
   });
+
+  // Initialize user profile (create roadmap) if classification has a career
+  // This is non-blocking - if it fails, we still return the assessment result
+  if (classification.careerId && result.id) {
+    try {
+      await initializeUserProfile({
+        userId: params.userId,
+        assessmentResultId: result.id,
+      });
+    } catch (error) {
+      // Log the error but don't throw - assessment completion is more important
+      console.warn('Profile initialization failed:', error instanceof Error ? error.message : error);
+    }
+  }
 
   return formatResult(result);
 };
@@ -572,4 +610,138 @@ export const listAssessmentClassifications = async () => {
       maxCategoryPercentages: rule.maxCategoryPercentages,
     })),
   }));
+};
+
+// Profile Initialization: Create learning roadmap after assessment
+export const initializeUserProfile = async (params: {
+  userId: string;
+  assessmentResultId: string;
+}) => {
+  // Validate userId format
+  if (!params.userId || typeof params.userId !== 'string') {
+    throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid userId provided.');
+  }
+
+  // Fetch assessment result
+  const result = await getAssessmentResultById(params.assessmentResultId);
+  if (!result) {
+    throw new ApiError(404, 'ASSESSMENT_RESULT_NOT_FOUND', 'Assessment result not found.');
+  }
+
+  // Verify result belongs to user
+  if (result.userId !== params.userId) {
+    throw new ApiError(403, 'ASSESSMENT_RESULT_FORBIDDEN', 'Assessment result does not belong to this user.');
+  }
+
+  // Check if career is assigned (careerId should be populated from classification rule matching)
+  if (!result.careerId) {
+    throw new ApiError(400, 'CAREER_NOT_ASSIGNED', 'Assessment result does not have an assigned career.');
+  }
+
+  const careerId = result.careerId;
+
+  // Fetch career with its skills
+  const career = await prisma.career.findUnique({
+    where: {
+      id: careerId,
+    },
+    include: {
+      careerSkills: {
+        include: {
+          skill: true,
+        },
+      },
+    },
+  });
+
+  if (!career) {
+    throw new ApiError(404, 'CAREER_NOT_FOUND', `Career with id ${careerId} not found.`);
+  }
+
+  // Check for existing roadmap (duplicate prevention)
+  const existingRoadmap = await findExistingRoadmap(params.userId, careerId);
+  if (existingRoadmap) {
+    // Return existing roadmap without throwing error
+    return formatRoadmapResponse(existingRoadmap, result);
+  }
+
+  // Create roadmap with skills (all in one transaction)
+  const roadmap = await createRoadmapWithSkills({
+    userId: params.userId,
+    careerId: careerId,
+    careerTitle: career.title,
+    careerDescription: career.description || null,
+    careerSkills: career.careerSkills.map((cs) => ({
+      skillId: cs.skillId,
+      level: cs.level,
+    })),
+  });
+
+  // Fetch complete roadmap with relations for response
+  const roadmapData = await getRoadmapWithSkills(roadmap.id);
+  if (!roadmapData) {
+    throw new ApiError(500, 'DATABASE_ERROR', 'Failed to fetch created roadmap.');
+  }
+
+  return formatRoadmapResponse(roadmapData, result);
+};
+
+// Helper: Format roadmap response
+const formatRoadmapResponse = (
+  roadmap: Awaited<ReturnType<typeof getRoadmapWithSkills>>,
+  assessmentResult: Awaited<ReturnType<typeof getAssessmentResultById>>,
+) => {
+  if (!roadmap || !assessmentResult) {
+    throw new ApiError(500, 'DATABASE_ERROR', 'Missing required data for response.');
+  }
+
+  return {
+    success: true,
+    roadmap: {
+      id: roadmap.id,
+      userId: roadmap.userId,
+      careerId: roadmap.careerId,
+      title: roadmap.title,
+      summary: roadmap.summary,
+      createdAt: roadmap.createdAt,
+    },
+    roadmapSkills: roadmap.roadmapSkills.map((rs) => ({
+      id: rs.id,
+      skillId: rs.skillId,
+      skill: {
+        id: rs.skill.id,
+        name: rs.skill.name,
+        description: rs.skill.description,
+      },
+      targetLevel: rs.targetLevel,
+      progress: rs.progress,
+      startedAt: roadmap.createdAt,
+    })),
+    career: {
+      id: roadmap.career.id,
+      title: roadmap.career.title,
+      description: roadmap.career.description,
+      outlook: roadmap.career.outlook,
+    },
+    assessment: {
+      resultId: assessmentResult.id,
+      percentage: assessmentResult.percentage,
+      summary: assessmentResult.summary,
+      categoryScores: assessmentResult.categoryScores.map((cs) => ({
+        id: cs.skillCategoryId,
+        name: cs.skillCategory.name,
+        score: cs.score,
+        maxScore: cs.maxScore,
+        percentage: cs.maxScore > 0 ? Number(((cs.score / cs.maxScore) * 100).toFixed(1)) : 0,
+      })),
+      classification: assessmentResult.classification
+        ? {
+            id: assessmentResult.classification.id,
+            name: assessmentResult.classification.name,
+            description: assessmentResult.classification.description,
+          }
+        : null,
+    },
+    message: 'Profile initialization successful',
+  };
 };
