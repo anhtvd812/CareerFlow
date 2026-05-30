@@ -56,11 +56,59 @@ model Career {
 }
 
 model Skill {
-  id            String         @id @default(cuid())
-  name          String
-  description   String?        @db.Text
-  careerSkills  CareerSkill[]
-  roadmapSkills RoadmapSkill[]
+  id                  String               @id @default(cuid())
+  name                String
+  description         String?              @db.Text
+  careerSkills        CareerSkill[]
+  roadmapSkills       RoadmapSkill[]
+  courseSkills        CourseSkill[]
+  sampleProjectSkills SampleProjectSkill[]
+}
+
+model Course {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?       @db.Text
+  difficulty     String
+  estimatedHours Int?
+  url            String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  courseSkills   CourseSkill[]
+}
+
+model CourseSkill {
+  id       String @id @default(cuid())
+  courseId String
+  skillId  String
+  course   Course @relation(fields: [courseId], references: [id])
+  skill    Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([courseId, skillId])
+  @@index([skillId])
+}
+
+model SampleProject {
+  id                  String               @id @default(cuid())
+  title               String
+  description         String?              @db.Text
+  difficulty          String
+  estimatedHours      Int?
+  instructions        String?              @db.Text
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  sampleProjectSkills SampleProjectSkill[]
+}
+
+model SampleProjectSkill {
+  id              String        @id @default(cuid())
+  sampleProjectId String
+  skillId         String
+  sampleProject   SampleProject @relation(fields: [sampleProjectId], references: [id])
+  skill           Skill         @relation(fields: [skillId], references: [id])
+
+  @@unique([sampleProjectId, skillId])
+  @@index([skillId])
 }
 
 model Roadmap {
