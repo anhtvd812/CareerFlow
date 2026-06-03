@@ -13,6 +13,16 @@ enum UserRole {
   ADMIN
 }
 
+enum ChatRoomType {
+  DIRECT
+  GROUP
+}
+
+enum MessageType {
+  TEXT
+  FILE
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
@@ -24,6 +34,9 @@ model User {
   roadmaps          Roadmap[]
   assessmentResults AssessmentResult[]
   mentorProfile     Mentor?
+  createdRooms      ChatRoom[]         @relation("ChatRoomCreator")
+  chatParticipants  ChatRoomParticipant[]
+  sentMessages      Message[]
 }
 
 model Career {
@@ -60,13 +73,72 @@ model Roadmap {
 }
 
 model Mentor {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  headline  String?
-  bio       String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  headline          String?
+  bio               String?
+  primarySpecialty  String?
+  specialties       String?
+  yearsOfExperience Int?
+  hourlyRate        Decimal? @db.Decimal(10, 2)
+  location          String?
+  isAvailable       Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@index([primarySpecialty])
+  @@index([isAvailable])
+  @@map("Mentors")
+}
+
+model ChatRoom {
+  id           String                @id @default(cuid())
+  name         String?
+  type         ChatRoomType          @default(DIRECT)
+  createdById  String
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  createdBy    User                  @relation("ChatRoomCreator", fields: [createdById], references: [id])
+  participants ChatRoomParticipant[]
+  messages     Message[]
+
+  @@index([createdById])
+  @@map("Chat_Rooms")
+}
+
+model ChatRoomParticipant {
+  id         String   @id @default(cuid())
+  roomId     String
+  userId     String
+  joinedAt   DateTime @default(now())
+  lastReadAt DateTime?
+  room       ChatRoom @relation(fields: [roomId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+  @@index([userId])
+  @@map("Chat_Room_Participants")
+}
+
+model Message {
+  id                 String      @id @default(cuid())
+  roomId             String
+  senderId           String
+  type               MessageType @default(TEXT)
+  content            String?     @db.Text
+  attachmentUrl      String?
+  attachmentFileName String?
+  attachmentMimeType String?
+  attachmentSize     Int?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  room               ChatRoom    @relation(fields: [roomId], references: [id])
+  sender             User        @relation(fields: [senderId], references: [id])
+
+  @@index([roomId, createdAt])
+  @@index([senderId])
+  @@map("Messages")
 }
 
 model AssessmentResult {
