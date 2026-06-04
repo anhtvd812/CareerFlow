@@ -438,8 +438,197 @@ curl -X POST http://localhost:3000/api/assessments/submit \
   "answers": [
     {
       "questionId": "q1",
+
+  ## Profile (Cập nhật hồ sơ)
+
       "prompt": "Which data structure fits LIFO?",
+
+  ### GET /api/profile/me
+
       "type": "MULTIPLE_CHOICE",
+
+  ```bash
+  curl http://localhost:3000/api/profile/me \
+    -H "Authorization: Bearer <JWT_TOKEN>"
+  ```
+
+  Response 200
+
+  ```json
+  {
+    "profile": {
+      "id": "profile_123",
+      "userId": "user_demo",
+      "headline": "IT Student",
+      "bio": "Focused on backend engineering and system design.",
+      "careerGoal": "Backend Engineer",
+      "careerGoalId": null,
+      "careerGoalRef": null,
+      "progressPercent": 0,
+      "lastAssessmentResultId": null,
+      "lastAssessmentTakenAt": null,
+      "createdAt": "2026-05-28T10:00:00.000Z",
+      "updatedAt": "2026-05-28T10:00:00.000Z"
+    },
+    "skills": [
+      {
+        "id": "user_skill_1",
+        "skillId": "skill_node",
+        "name": "Node.js",
+        "level": 2,
+        "source": "MANUAL",
+        "updatedAt": "2026-05-28T10:00:00.000Z"
+      }
+    ],
+    "certifications": []
+  }
+  ```
+
+  ### PATCH /api/profile/me
+
+  Cập nhật headline, bio, và mục tiêu nghề nghiệp.
+
+  ```bash
+  curl -X PATCH http://localhost:3000/api/profile/me \
+    -H "Authorization: Bearer <JWT_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "headline": "Backend Learner",
+      "bio": "Learning Node.js and databases.",
+      "careerGoal": "Backend Engineer"
+    }'
+  ```
+
+  Response 200
+
+  ```json
+  {
+    "profile": {
+      "id": "profile_123",
+      "userId": "user_demo",
+      "headline": "Backend Learner",
+      "bio": "Learning Node.js and databases.",
+      "careerGoal": "Backend Engineer",
+      "careerGoalId": null,
+      "careerGoalRef": null,
+      "progressPercent": 0,
+      "lastAssessmentResultId": null,
+      "lastAssessmentTakenAt": null,
+      "createdAt": "2026-05-28T10:00:00.000Z",
+      "updatedAt": "2026-05-28T10:10:00.000Z"
+    }
+  }
+  ```
+
+  ### PUT /api/profile/me/skills
+
+  Upsert danh sách kỹ năng.
+
+  ```bash
+  curl -X PUT http://localhost:3000/api/profile/me/skills \
+    -H "Authorization: Bearer <JWT_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "skills": [
+        { "skillId": "skill_node", "level": 2, "source": "MANUAL" }
+      ]
+    }'
+  ```
+
+  Response 200
+
+  ```json
+  {
+    "skills": [
+      {
+        "id": "user_skill_1",
+        "skillId": "skill_node",
+        "name": "Node.js",
+        "level": 2,
+        "source": "MANUAL",
+        "updatedAt": "2026-05-28T10:10:00.000Z"
+      }
+    ]
+  }
+  ```
+
+  ### GET /api/profile/me/certifications
+
+  Lấy danh sách chứng chỉ.
+
+  ```bash
+  curl http://localhost:3000/api/profile/me/certifications \
+    -H "Authorization: Bearer <JWT_TOKEN>"
+  ```
+
+  Response 200
+
+  ```json
+  {
+    "certifications": [
+      {
+        "id": "cert_1",
+        "name": "Intro to Backend APIs",
+        "issuer": "CareerFlow Academy",
+        "issuedAt": "2025-11-12T00:00:00.000Z",
+        "expiresAt": null,
+        "credentialUrl": "https://careerflow.local/certificates/backend-apis",
+        "updatedAt": "2026-05-28T10:00:00.000Z"
+      }
+    ]
+  }
+  ```
+
+  ### POST /api/profile/me/certifications
+
+  Thêm chứng chỉ.
+
+  ```bash
+  curl -X POST http://localhost:3000/api/profile/me/certifications \
+    -H "Authorization: Bearer <JWT_TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Intro to Backend APIs",
+      "issuer": "CareerFlow Academy",
+      "issuedAt": "2025-11-12",
+      "credentialUrl": "https://careerflow.local/certificates/backend-apis"
+    }'
+  ```
+
+  Response 201
+
+  ```json
+  {
+    "certification": {
+      "id": "cert_1",
+      "name": "Intro to Backend APIs",
+      "issuer": "CareerFlow Academy",
+      "issuedAt": "2025-11-12T00:00:00.000Z",
+      "expiresAt": null,
+      "credentialUrl": "https://careerflow.local/certificates/backend-apis",
+      "updatedAt": "2026-05-28T10:00:00.000Z"
+    }
+  }
+  ```
+
+  ### DELETE /api/profile/me/certifications/:id
+
+  Xoá chứng chỉ.
+
+  ```bash
+  curl -X DELETE http://localhost:3000/api/profile/me/certifications/cert_1 \
+    -H "Authorization: Bearer <JWT_TOKEN>"
+  ```
+
+  Response 200
+
+  ```json
+  {
+    "message": "Certification deleted."
+  }
+  ```
+
+  ---
       "selectedChoice": {
         "id": "c1",
         "label": "Stack",

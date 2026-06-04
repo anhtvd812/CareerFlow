@@ -23,6 +23,7 @@ import {
   upsertAssessmentAttemptAnswers,
 } from '../repositories/assessmentRepository';
 import type { AttemptAnswerInput, SubmitAnswerInput } from '../validators/assessmentValidators';
+import { updateProfileFromAssessment } from './profileService';
 
 type AssessmentForScoring = Assessment & {
   questions: (AssessmentQuestion & {
@@ -417,6 +418,13 @@ export const submitAssessment = async (params: {
         maxScore: category.maxScore,
       })),
     },
+  });
+
+  await updateProfileFromAssessment({
+    userId: params.userId,
+    assessmentResultId: result.id,
+    percentage: result.percentage,
+    completedAt: result.createdAt,
   });
 
   return formatResult(result);
