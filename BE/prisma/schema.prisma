@@ -44,6 +44,7 @@ model User {
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   roadmaps          Roadmap[]
+  userSkills        UserSkill[]
   assessmentResults AssessmentResult[]
   assessmentAnswers UserAnswer[]
   assessmentAttempts AssessmentAttempt[]
@@ -356,4 +357,16 @@ model RoadmapSkill {
   skill       Skill   @relation(fields: [skillId], references: [id])
 
   @@unique([roadmapId, skillId])
+}
+
+model UserSkill {
+  id        String          @id @default(cuid())
+  userId    String
+  skillId   String
+  level     Int             @default(1)
+  source    UserSkillSource
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id])
+  skill     Skill           @relation(fields: [skillId], references: [id])
 }
