@@ -13,6 +13,12 @@ enum UserRole {
   ADMIN
 }
 
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+ 
 enum QuestionType {
   MULTIPLE_CHOICE
   TEXT
@@ -49,8 +55,8 @@ model User {
   assessmentAnswers UserAnswer[]
   assessmentAttempts AssessmentAttempt[]
   mentorProfile     Mentor?
+  userTasks         UserTask[]
   profile           UserProfile?
-  skills            UserSkill[]
   certifications    UserCertification[]
 }
 
@@ -135,6 +141,38 @@ model Roadmap {
   user          User           @relation(fields: [userId], references: [id])
   career        Career         @relation(fields: [careerId], references: [id])
   roadmapSkills RoadmapSkill[]
+  stages        Stage[]
+  userTasks     UserTask[]
+}
+
+model Stage {
+  id          String   @id @default(cuid())
+  roadmapId   String
+  name        String
+  description String?
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roadmap     Roadmap  @relation(fields: [roadmapId], references: [id])
+  userTasks   UserTask[]
+}
+
+model UserTask {
+  id        String     @id @default(cuid())
+  userId    String
+  roadmapId String
+  stageId   String
+  title     String
+  type      String?
+  status    TaskStatus @default(NOT_STARTED)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  roadmap   Roadmap    @relation(fields: [roadmapId], references: [id])
+  stage     Stage      @relation(fields: [stageId], references: [id])
+
+  @@index([roadmapId, userId])
+  @@index([stageId])
 }
 
 model Mentor {
