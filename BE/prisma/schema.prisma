@@ -28,6 +28,13 @@ enum AssessmentAttemptStatus {
   SUBMITTED
 }
 
+enum UserSkillSource {
+  MANUAL
+  ASSESSMENT
+  ROADMAP
+  CERTIFICATION
+}
+
 model User {
   id                String             @id @default(cuid())
   email             String             @unique
@@ -41,27 +48,31 @@ model User {
   assessmentAnswers UserAnswer[]
   assessmentAttempts AssessmentAttempt[]
   mentorProfile     Mentor?
+  profile           UserProfile?
+  skills            UserSkill[]
+  certifications    UserCertification[]
 }
 
 model Career {
-  id                     String                        @id @default(cuid())
-  title                  String
-  description            String                        @db.Text
-  outlook                String?                       @db.Text
-  createdAt              DateTime                      @default(now())
-  updatedAt              DateTime                      @updatedAt
-  roadmaps               Roadmap[]
-  assessmentResults      AssessmentResult[]
-  careerSkills           CareerSkill[]
-  classificationRules    AssessmentClassificationRule[]
+  id                String             @id @default(cuid())
+  title             String
+  description       String             @db.Text
+  outlook           String?            @db.Text
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  roadmaps          Roadmap[]
+  assessmentResults AssessmentResult[]
+  careerSkills      CareerSkill[]
+  goalProfiles      UserProfile[]
 }
 
 model Skill {
   id            String         @id @default(cuid())
-  name          String
+  name          String         @unique
   description   String?        @db.Text
   careerSkills  CareerSkill[]
   roadmapSkills RoadmapSkill[]
+  userSkills    UserSkill[]
 }
 
 model Roadmap {
@@ -171,8 +182,58 @@ model AssessmentResult {
   attempt       AssessmentAttempt?        @relation(fields: [attemptId], references: [id])
   career        Career?                   @relation(fields: [careerId], references: [id])
   classification Classification?          @relation(fields: [classificationId], references: [id])
+  profile        UserProfile?             @relation("ProfileLastAssessment")
   answers       UserAnswer[]
   categoryScores AssessmentResultCategory[]
+}
+
+model UserProfile {
+  id                     String            @id @default(cuid())
+  userId                 String            @unique
+  headline               String?           @db.Text
+  bio                    String?           @db.Text
+  careerGoal             String?           @db.Text
+  careerGoalId           String?
+  progressPercent        Float             @default(0)
+  lastAssessmentResultId String?           @unique
+  lastAssessmentTakenAt  DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  user                   User              @relation(fields: [userId], references: [id])
+  careerGoalRef          Career?           @relation(fields: [careerGoalId], references: [id])
+  lastAssessmentResult   AssessmentResult? @relation("ProfileLastAssessment", fields: [lastAssessmentResultId], references: [id])
+
+  @@index([careerGoalId])
+}
+
+model UserSkill {
+  id        String          @id @default(cuid())
+  userId    String
+  skillId   String
+  level     Int             @default(1)
+  source    UserSkillSource @default(MANUAL)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User            @relation(fields: [userId], references: [id])
+  skill     Skill           @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+  @@index([skillId])
+}
+
+model UserCertification {
+  id             String   @id @default(cuid())
+  userId         String
+  name           String   @db.Text
+  issuer         String?  @db.Text
+  issuedAt       DateTime?
+  expiresAt      DateTime?
+  credentialUrl  String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }
 
 model AssessmentAttempt {

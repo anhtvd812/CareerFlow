@@ -27,6 +27,7 @@ import {
   getRoadmapWithSkills,
 } from '../repositories/assessmentRepository';
 import type { AttemptAnswerInput, SubmitAnswerInput } from '../validators/assessmentValidators';
+import { updateProfileFromAssessment } from './profileService';
 
 type AssessmentForScoring = Assessment & {
   questions: (AssessmentQuestion & {
@@ -443,19 +444,12 @@ export const submitAssessment = async (params: {
     },
   });
 
-  // Initialize user profile (create roadmap) if classification has a career
-  // This is non-blocking - if it fails, we still return the assessment result
-  if (classification.careerId && result.id) {
-    try {
-      await initializeUserProfile({
-        userId: params.userId,
-        assessmentResultId: result.id,
-      });
-    } catch (error) {
-      // Log the error but don't throw - assessment completion is more important
-      console.warn('Profile initialization failed:', error instanceof Error ? error.message : error);
-    }
-  }
+  await updateProfileFromAssessment({
+    userId: params.userId,
+    assessmentResultId: result.id,
+    percentage: result.percentage,
+    completedAt: result.createdAt,
+  });
 
   return formatResult(result);
 };
