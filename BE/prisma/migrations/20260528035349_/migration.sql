@@ -1,0 +1,2 @@
+-- This migration is intentionally left blank to avoid applying
+-- destructive FK changes on fresh databases.
