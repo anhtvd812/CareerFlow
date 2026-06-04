@@ -29,6 +29,8 @@ tags:
     description: User assessment history
   - name: Classifications
     description: Classification rule lookups
+  - name: Recommendations
+    description: Roadmap recommendation endpoints
 paths:
   /api/tests/{testId}/start:
     post:
@@ -975,6 +977,94 @@ paths:
                     message: "Internal server error."
                     code: "INTERNAL_SERVER_ERROR"
       security: []
+  /api/recommendations/roadmap:
+    post:
+      tags: [Recommendations]
+      summary: Recommend learning roadmap
+      description: Generate and persist a personalized roadmap from a career goal plus current level, current skills, or an assessment result.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoadmapRecommendationRequest"
+            examples:
+              byLevelAndSkills:
+                value:
+                  careerGoal: "Data Science"
+                  currentLevel: "beginner"
+                  currentSkills: ["Python"]
+              byAssessmentResult:
+                value:
+                  careerGoal: "Data Science"
+                  assessmentResultId: "result_123"
+      responses:
+        "201":
+          description: Roadmap recommendation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoadmapRecommendationResponse"
+              examples:
+                success:
+                  value:
+                    roadmapId: "roadmap_123"
+                    career:
+                      id: "career_data_science"
+                      title: "Data Science"
+                    summary: "Personalized roadmap for Data Science based on 2 skill gaps."
+                    skillGaps:
+                      - id: "skill_sql"
+                        name: "SQL"
+                        currentLevel: 0
+                        targetLevel: 2
+                    stages:
+                      - order: 2
+                        title: "Practice"
+                        knowledge:
+                          - skillId: "skill_sql"
+                            skillName: "SQL"
+                            description: "Query relational databases and shape analytical datasets."
+                            courses:
+                              - id: "course_sql_analytics"
+                                title: "SQL for Analytics"
+                                description: "Practice joins, grouping, filtering, subqueries, and analytical reporting queries."
+                                difficulty: "intermediate"
+                                estimatedHours: 10
+                                url: null
+                        miniProjects:
+                          - id: "project_sql_customer_segments"
+                            title: "Customer Segmentation SQL Report"
+                            description: "Write SQL queries that segment customers by purchase frequency and total spend."
+                            difficulty: "intermediate"
+                            estimatedHours: 6
+                            instructions: "Create joins across customers, orders, and order items, then summarize the top segments."
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No matching roadmap or assessment result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Database unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   securitySchemes:
     bearerAuth:
@@ -1044,6 +1134,139 @@ components:
       properties:
         message:
           type: string
+    RoadmapRecommendationRequest:
+      type: object
+      required: [careerGoal]
+      properties:
+        careerGoal:
+          type: string
+          minLength: 1
+          example: "Data Science"
+        currentLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "beginner"
+        currentSkills:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          example: ["Python"]
+        assessmentResultId:
+          type: string
+          example: "result_123"
+      anyOf:
+        - required: [currentLevel]
+        - required: [currentSkills]
+        - required: [assessmentResultId]
+    RoadmapRecommendationResponse:
+      type: object
+      required: [roadmapId, career, summary, skillGaps, stages]
+      properties:
+        roadmapId:
+          type: string
+        career:
+          $ref: "#/components/schemas/RoadmapCareer"
+        summary:
+          type: string
+        skillGaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapSkillGap"
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapStage"
+    RoadmapCareer:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    RoadmapSkillGap:
+      type: object
+      required: [id, name, currentLevel, targetLevel]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        currentLevel:
+          type: integer
+        targetLevel:
+          type: integer
+    RoadmapStage:
+      type: object
+      required: [order, title, knowledge, miniProjects]
+      properties:
+        order:
+          type: integer
+        title:
+          type: string
+        knowledge:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapKnowledgeItem"
+        miniProjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapMiniProject"
+    RoadmapKnowledgeItem:
+      type: object
+      required: [skillId, skillName, courses]
+      properties:
+        skillId:
+          type: string
+        skillName:
+          type: string
+        description:
+          type: string
+          nullable: true
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapCourse"
+    RoadmapCourse:
+      type: object
+      required: [id, title, difficulty]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        estimatedHours:
+          type: integer
+          nullable: true
+        url:
+          type: string
+          nullable: true
+    RoadmapMiniProject:
+      type: object
+      required: [id, title, difficulty]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        estimatedHours:
+          type: integer
+          nullable: true
+        instructions:
+          type: string
+          nullable: true
     SubmitAssessmentRequest:
       type: object
       required: [assessmentId, answers]

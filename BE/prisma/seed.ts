@@ -7,29 +7,190 @@ import {
 
 const prisma = new PrismaClient();
 
-const upsertCategory = async (name: string, description: string) =>
-  prisma.skillCategory.upsert({
-    where: { name },
-    update: { description },
-    create: { name, description },
-  });
-
-const upsertClassification = async (name: string, description: string, isDefault = false) =>
-  prisma.classification.upsert({
-    where: { name },
-    update: { description, isDefault },
-    create: { name, description, isDefault },
-  });
-
 const DEMO_USER_ID = 'user_demo';
 const DEMO_ASSESSMENT_ID = 'asmt_core_it';
 
+const seedRecommendationResources = async () => {
+  const python = await prisma.skill.upsert({
+    where: { id: 'skill_python' },
+    update: {
+      name: 'Python',
+      description: 'Python programming fundamentals for data workflows.',
+    },
+    create: {
+      id: 'skill_python',
+      name: 'Python',
+      description: 'Python programming fundamentals for data workflows.',
+    },
+  });
+
+  const sql = await prisma.skill.upsert({
+    where: { id: 'skill_sql' },
+    update: {
+      name: 'SQL',
+      description: 'Query relational databases and shape analytical datasets.',
+    },
+    create: {
+      id: 'skill_sql',
+      name: 'SQL',
+      description: 'Query relational databases and shape analytical datasets.',
+    },
+  });
+
+  const dataAnalysis = await prisma.skill.upsert({
+    where: { id: 'skill_data_analysis' },
+    update: {
+      name: 'Data Analysis',
+      description: 'Explore, clean, and summarize datasets for business decisions.',
+    },
+    create: {
+      id: 'skill_data_analysis',
+      name: 'Data Analysis',
+      description: 'Explore, clean, and summarize datasets for business decisions.',
+    },
+  });
+
+  const dataScience = await prisma.career.upsert({
+    where: { id: 'career_data_science' },
+    update: {
+      title: 'Data Science',
+      description: 'Analyze data, build models, and communicate insights for product and business teams.',
+      outlook: 'Growing demand for data professionals who combine statistics, coding, and domain insight.',
+    },
+    create: {
+      id: 'career_data_science',
+      title: 'Data Science',
+      description: 'Analyze data, build models, and communicate insights for product and business teams.',
+      outlook: 'Growing demand for data professionals who combine statistics, coding, and domain insight.',
+    },
+  });
+
+  const careerSkills = [
+    { skillId: python.id, level: 1 },
+    { skillId: sql.id, level: 2 },
+    { skillId: dataAnalysis.id, level: 2 },
+  ];
+
+  for (const careerSkill of careerSkills) {
+    await prisma.careerSkill.upsert({
+      where: {
+        careerId_skillId: {
+          careerId: dataScience.id,
+          skillId: careerSkill.skillId,
+        },
+      },
+      update: {
+        level: careerSkill.level,
+      },
+      create: {
+        careerId: dataScience.id,
+        skillId: careerSkill.skillId,
+        level: careerSkill.level,
+      },
+    });
+  }
+
+  const courses = [
+    {
+      id: 'course_python_foundations',
+      title: 'Python Foundations for Data',
+      description: 'Learn variables, control flow, functions, files, and common data structures.',
+      difficulty: 'beginner',
+      estimatedHours: 12,
+      url: 'https://docs.python.org/3/tutorial/',
+      skillIds: [python.id],
+    },
+    {
+      id: 'course_sql_analytics',
+      title: 'SQL for Analytics',
+      description: 'Practice joins, grouping, filtering, subqueries, and analytical reporting queries.',
+      difficulty: 'intermediate',
+      estimatedHours: 10,
+      url: null,
+      skillIds: [sql.id],
+    },
+    {
+      id: 'course_data_analysis_workflow',
+      title: 'Data Analysis Workflow',
+      description: 'Clean a dataset, calculate metrics, visualize findings, and write a concise report.',
+      difficulty: 'intermediate',
+      estimatedHours: 14,
+      url: null,
+      skillIds: [python.id, dataAnalysis.id],
+    },
+  ];
+
+  for (const course of courses) {
+    await prisma.$executeRaw`
+      INSERT INTO Course (id, title, description, difficulty, estimatedHours, url, createdAt, updatedAt)
+      VALUES (${course.id}, ${course.title}, ${course.description}, ${course.difficulty}, ${course.estimatedHours}, ${course.url}, NOW(3), NOW(3))
+      ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        description = VALUES(description),
+        difficulty = VALUES(difficulty),
+        estimatedHours = VALUES(estimatedHours),
+        url = VALUES(url),
+        updatedAt = NOW(3)
+    `;
+
+    for (const skillId of course.skillIds) {
+      await prisma.$executeRaw`
+        INSERT INTO CourseSkill (id, courseId, skillId)
+        VALUES (${`${course.id}_${skillId}`}, ${course.id}, ${skillId})
+        ON DUPLICATE KEY UPDATE skillId = VALUES(skillId)
+      `;
+    }
+  }
+
+  const projects = [
+    {
+      id: 'project_sales_dashboard',
+      title: 'Sales KPI Dashboard',
+      description: 'Build a small dashboard from CSV sales data with revenue, retention, and cohort metrics.',
+      difficulty: 'intermediate',
+      estimatedHours: 8,
+      instructions: 'Load a CSV file, clean missing values, calculate KPIs, and present charts plus findings.',
+      skillIds: [python.id, dataAnalysis.id],
+    },
+    {
+      id: 'project_sql_customer_segments',
+      title: 'Customer Segmentation SQL Report',
+      description: 'Write SQL queries that segment customers by purchase frequency and total spend.',
+      difficulty: 'intermediate',
+      estimatedHours: 6,
+      instructions: 'Create joins across customers, orders, and order items, then summarize the top segments.',
+      skillIds: [sql.id, dataAnalysis.id],
+    },
+  ];
+
+  for (const project of projects) {
+    await prisma.$executeRaw`
+      INSERT INTO SampleProject (id, title, description, difficulty, estimatedHours, instructions, createdAt, updatedAt)
+      VALUES (${project.id}, ${project.title}, ${project.description}, ${project.difficulty}, ${project.estimatedHours}, ${project.instructions}, NOW(3), NOW(3))
+      ON DUPLICATE KEY UPDATE
+        title = VALUES(title),
+        description = VALUES(description),
+        difficulty = VALUES(difficulty),
+        estimatedHours = VALUES(estimatedHours),
+        instructions = VALUES(instructions),
+        updatedAt = NOW(3)
+    `;
+
+    for (const skillId of project.skillIds) {
+      await prisma.$executeRaw`
+        INSERT INTO SampleProjectSkill (id, sampleProjectId, skillId)
+        VALUES (${`${project.id}_${skillId}`}, ${project.id}, ${skillId})
+        ON DUPLICATE KEY UPDATE skillId = VALUES(skillId)
+      `;
+    }
+  }
+};
+
 const main = async () => {
-  await prisma.user.upsert({
-    where: { id: DEMO_USER_ID },
+  const demoUser = await prisma.user.upsert({
+    where: { email: 'demo@careerflow.local' },
     update: {
       name: 'Demo User',
-      email: 'demo@careerflow.local',
       passwordHash: 'demo_hash',
       role: 'STUDENT',
     },
@@ -287,6 +448,8 @@ const main = async () => {
       ],
     });
   }
+
+  await seedRecommendationResources();
 };
 
 main()
