@@ -15,13 +15,16 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+app.use(express.json({ limit: '12mb' }));
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 const swaggerPath = path.resolve(__dirname, '../src/docs/assessment-openapi.yaml');
 const swaggerDoc = YAML.load(swaggerPath);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api', routes);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.use(errorHandler);
 

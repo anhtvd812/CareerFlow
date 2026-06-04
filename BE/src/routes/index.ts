@@ -2,6 +2,7 @@ import { Router } from 'express';
 import authRoutes from './authRoutes';
 import assessmentRoutes from './assessmentRoutes';
 import careerRoutes from './careerRoutes';
+import chatRoutes from './chatRoutes';
 import healthRoutes from './healthRoutes';
 import mentorRoutes from './mentorRoutes';
 
