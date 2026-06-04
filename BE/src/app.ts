@@ -4,7 +4,7 @@ import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import routes from './routes';
-import { errorHandler } from './middlewares/errorHandler';
+import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { getEnv } from './utils/env';
 
 const app = express();
@@ -24,8 +24,6 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc));
 
 app.use('/api', routes);
 app.use(notFoundHandler);
-app.use(errorHandler);
-
 app.use(errorHandler);
 
 export default app;
