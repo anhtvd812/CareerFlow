@@ -22,6 +22,7 @@ import {
   listUserAssessmentResults,
   markAssessmentAttemptSubmitted,
   upsertAssessmentAttemptAnswers,
+  getUserById,
   findExistingRoadmap,
   createRoadmapWithSkills,
   getRoadmapWithSkills,
@@ -307,6 +308,11 @@ export const submitAssessment = async (params: {
   const assessment = (await getAssessmentForScoring(params.assessmentId)) as AssessmentForScoring | null;
   if (!assessment) {
     throw new ApiError(404, 'ASSESSMENT_NOT_FOUND', 'Assessment not found.');
+  }
+
+  const user = await getUserById(params.userId);
+  if (!user) {
+    throw new ApiError(404, 'USER_NOT_FOUND', 'User not found.');
   }
 
   const answerMap = new Map(params.answers.map((answer) => [answer.questionId, answer]));

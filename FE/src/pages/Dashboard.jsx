@@ -25,7 +25,8 @@ export default function Dashboard() {
       let assessmentHistory = [];
       try {
         const authUser = JSON.parse(localStorage.getItem('authUser') || 'null');
-        const userId = authUser?.id || 'user_demo';
+        const demoUserId = import.meta.env.VITE_DEMO_USER_ID || 'user_demo';
+        const userId = authUser?.id || demoUserId;
         assessmentHistory = await getUserAssessmentHistory(userId);
       } catch (_error) {
         assessmentHistory = [];

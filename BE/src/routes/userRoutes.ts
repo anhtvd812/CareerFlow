@@ -4,6 +4,6 @@ import { requireAuth } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.get('/:id/assessments', requireAuth, listUserAssessmentHistoryHandler);
+router.get('/:id/assessments', listUserAssessmentHistoryHandler);
 
 export default router;

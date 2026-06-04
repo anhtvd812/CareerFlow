@@ -21,6 +21,7 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/assessments', assessmentRoutes);
 router.use('/careers', careerRoutes);
+router.use('/chat', chatRoutes);
 router.use('/mentors', mentorRoutes);
 router.use('/roadmap', roadmapRoutes);
 router.use('/recommendations', recommendationRoutes);

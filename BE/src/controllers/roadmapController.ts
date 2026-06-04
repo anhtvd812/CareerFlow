@@ -38,6 +38,109 @@ const applyStatusCount = (totals: Totals, status: PrismaTaskStatus, count: numbe
   }
 };
 
+const toApiStatus = (status: PrismaTaskStatus) => status.toLowerCase();
+
+const parseTaskStatus = (value: unknown): PrismaTaskStatus | null => {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === 'COMPLETED' || normalized === 'IN_PROGRESS' || normalized === 'NOT_STARTED') {
+    return normalized as PrismaTaskStatus;
+  }
+
+  return null;
+};
+
+const serializeRoadmap = (
+  roadmap: NonNullable<Awaited<ReturnType<typeof prisma.roadmap.findFirst>>>,
+  stages: Awaited<ReturnType<typeof prisma.stage.findMany>>,
+  tasks: Awaited<ReturnType<typeof prisma.userTask.findMany>>,
+) => ({
+  id: roadmap.id,
+  userId: roadmap.userId,
+  careerId: roadmap.careerId,
+  title: roadmap.title,
+  summary: roadmap.summary,
+  stages: stages.map((stage) => ({
+    id: stage.id,
+    name: stage.name,
+    description: stage.description,
+    position: stage.position,
+    tasks: tasks
+      .filter((task) => task.stageId === stage.id)
+      .map((task) => ({
+        id: task.id,
+        title: task.title,
+        type: task.type,
+        status: toApiStatus(task.status),
+      })),
+  })),
+});
+
+export const getRoadmap = async (req: Request, res: Response) => {
+  try {
+    const userId = normalizeQueryValue(req.query.userId);
+    const roadmapId = normalizeQueryValue(req.query.roadmapId);
+
+    if (!userId && !roadmapId) {
+      return res.status(400).json({ message: 'userId or roadmapId is required.' });
+    }
+
+    const roadmap = roadmapId
+      ? await prisma.roadmap.findUnique({ where: { id: roadmapId } })
+      : await prisma.roadmap.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+    if (!roadmap || (userId && roadmap.userId !== userId)) {
+      return res.status(404).json({ message: 'Roadmap not found.' });
+    }
+
+    const [stages, tasks] = await Promise.all([
+      prisma.stage.findMany({
+        where: { roadmapId: roadmap.id },
+        orderBy: { position: 'asc' },
+      }),
+      prisma.userTask.findMany({
+        where: { roadmapId: roadmap.id, userId: roadmap.userId },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    return res.status(200).json(serializeRoadmap(roadmap, stages, tasks));
+  } catch (error) {
+    return res.status(500).json({ message: 'Failed to load roadmap.' });
+  }
+};
+
+export const updateRoadmapTask = async (req: Request, res: Response) => {
+  try {
+    const taskId = normalizeQueryValue(req.params.id);
+    const status = parseTaskStatus(req.body?.status);
+
+    if (!taskId || !status) {
+      return res.status(400).json({ message: 'task id and valid status are required.' });
+    }
+
+    const task = await prisma.userTask.update({
+      where: { id: taskId },
+      data: { status },
+    });
+
+    return res.status(200).json({
+      id: task.id,
+      title: task.title,
+      type: task.type,
+      status: toApiStatus(task.status),
+    });
+  } catch (error) {
+    return res.status(404).json({ message: 'Task not found.' });
+  }
+};
+
 export const getRoadmapProgress = async (req: Request, res: Response) => {
   try {
     const userId = normalizeQueryValue(req.query.userId);

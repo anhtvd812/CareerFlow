@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { getRoadmapProgress } from '../controllers/roadmapController';
+import { getRoadmap, getRoadmapProgress, updateRoadmapTask } from '../controllers/roadmapController';
 
 const router = Router();
 
+router.get('/', getRoadmap);
 router.get('/progress', getRoadmapProgress);
+router.patch('/tasks/:id', updateRoadmapTask);
 
 export default router;

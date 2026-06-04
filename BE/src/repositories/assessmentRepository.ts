@@ -221,6 +221,16 @@ export const listClassifications = () =>
     },
   });
 
+export const getUserById = (userId: string) =>
+  prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
 // Roadmap operations for profile initialization
 export const findExistingRoadmap = (userId: string, careerId: string) =>
   prisma.roadmap.findFirst({

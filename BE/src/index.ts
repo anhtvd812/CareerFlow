@@ -5,7 +5,7 @@ import { getEnv } from './utils/env';
 
 dotenv.config();
 
-const port = Number(getEnv('PORT', '4000'));
+const port = Number(getEnv('PORT', '3000'));
 
 const server = app.listen(port, () => {
   console.log(`API listening on http://localhost:${port}`);

@@ -19,3 +19,20 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     return next(new ApiError(401, 'AUTH_INVALID', 'Invalid authentication token.'));
   }
 };
+
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    return next();
+  }
+
+  const token = header.replace('Bearer ', '').trim();
+
+  try {
+    req.user = jwt.verify(token, getEnv('JWT_SECRET', 'change_me'));
+  } catch (error) {
+    // Keep this route backward compatible for prototype payloads that pass userId in the body.
+  }
+
+  return next();
+};

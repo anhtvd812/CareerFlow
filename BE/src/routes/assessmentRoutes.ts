@@ -9,13 +9,13 @@ import {
   submitAttemptHandler,
   submitAssessmentHandler,
 } from '../controllers/assessmentController';
-import { requireAuth } from '../middlewares/authMiddleware';
+import { optionalAuth, requireAuth } from '../middlewares/authMiddleware';
 
 const router = Router();
 
-router.post('/submit', requireAuth, submitAssessmentHandler);
-router.get('/', requireAuth, listAssessmentsHandler);
-router.get('/:id/questions', requireAuth, getAssessmentQuestionsHandler);
+router.post('/submit', optionalAuth, submitAssessmentHandler);
+router.get('/', listAssessmentsHandler);
+router.get('/:id/questions', getAssessmentQuestionsHandler);
 router.post('/:id/attempts', requireAuth, createAttemptHandler);
 router.patch('/attempts/:id', requireAuth, saveAttemptHandler);
 router.post('/attempts/:id/submit', requireAuth, submitAttemptHandler);
