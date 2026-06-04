@@ -2,6 +2,7 @@ import {
   PrismaClient,
   QuestionType,
   TextMatchMode,
+  UserSkillSource,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -41,6 +42,22 @@ const main = async () => {
     },
   });
 
+  await prisma.userProfile.upsert({
+    where: { userId: DEMO_USER_ID },
+    update: {
+      headline: 'IT Student',
+      bio: 'Focused on backend engineering and system design.',
+      careerGoal: 'Backend Engineer',
+    },
+    create: {
+      userId: DEMO_USER_ID,
+      headline: 'IT Student',
+      bio: 'Focused on backend engineering and system design.',
+      careerGoal: 'Backend Engineer',
+      progressPercent: 0,
+    },
+  });
+
   const problemSolving = await prisma.skillCategory.upsert({
     where: { name: 'Problem Solving' },
     update: { description: 'Reasoning, algorithms, and analytical thinking.' },
@@ -68,6 +85,38 @@ const main = async () => {
       description: 'Hands-on engineering knowledge.',
     },
   });
+
+  const skillNode = await prisma.skill.upsert({
+    where: { name: 'Node.js' },
+    update: { description: 'Node.js runtime and tooling.' },
+    create: { id: 'skill_node', name: 'Node.js', description: 'Node.js runtime and tooling.' },
+  });
+  const skillSql = await prisma.skill.upsert({
+    where: { name: 'SQL' },
+    update: { description: 'Relational database fundamentals.' },
+    create: { id: 'skill_sql', name: 'SQL', description: 'Relational database fundamentals.' },
+  });
+
+  await prisma.userSkill.upsert({
+    where: { userId_skillId: { userId: DEMO_USER_ID, skillId: skillNode.id } },
+    update: { level: 2, source: UserSkillSource.MANUAL },
+    create: { userId: DEMO_USER_ID, skillId: skillNode.id, level: 2, source: UserSkillSource.MANUAL },
+  });
+  await prisma.userSkill.upsert({
+    where: { userId_skillId: { userId: DEMO_USER_ID, skillId: skillSql.id } },
+    update: { level: 1, source: UserSkillSource.MANUAL },
+    create: { userId: DEMO_USER_ID, skillId: skillSql.id, level: 1, source: UserSkillSource.MANUAL },
+  });
+
+  await prisma.userCertification.create({
+    data: {
+      userId: DEMO_USER_ID,
+      name: 'Intro to Backend APIs',
+      issuer: 'CareerFlow Academy',
+      issuedAt: new Date('2025-11-12T00:00:00.000Z'),
+      credentialUrl: 'https://careerflow.local/certificates/backend-apis',
+    },
+  }).catch(() => undefined);
 
   const existingAssessment = await prisma.assessment.findUnique({
     where: { id: DEMO_ASSESSMENT_ID },

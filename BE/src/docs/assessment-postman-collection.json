@@ -650,6 +650,281 @@
       ]
     },
     {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"profile\": {\n    \"id\": \"profile_123\",\n    \"userId\": \"user_demo\",\n    \"headline\": \"IT Student\",\n    \"bio\": \"Focused on backend engineering and system design.\",\n    \"careerGoal\": \"Backend Engineer\",\n    \"careerGoalId\": null,\n    \"careerGoalRef\": null,\n    \"progressPercent\": 0,\n    \"lastAssessmentResultId\": null,\n    \"lastAssessmentTakenAt\": null,\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n  },\n  \"skills\": [\n    {\n      \"id\": \"user_skill_1\",\n      \"skillId\": \"skill_node\",\n      \"name\": \"Node.js\",\n      \"level\": 2,\n      \"source\": \"MANUAL\",\n      \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n    }\n  ],\n  \"certifications\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headline\": \"Backend Learner\",\n  \"bio\": \"Learning Node.js and databases.\",\n  \"careerGoal\": \"Backend Engineer\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"profile\": {\n    \"id\": \"profile_123\",\n    \"userId\": \"user_demo\",\n    \"headline\": \"Backend Learner\",\n    \"bio\": \"Learning Node.js and databases.\",\n    \"careerGoal\": \"Backend Engineer\",\n    \"careerGoalId\": null,\n    \"careerGoalRef\": null,\n    \"progressPercent\": 0,\n    \"lastAssessmentResultId\": null,\n    \"lastAssessmentTakenAt\": null,\n    \"createdAt\": \"2026-05-28T10:00:00.000Z\",\n    \"updatedAt\": \"2026-05-28T10:10:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Skills",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me/skills",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me", "skills"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skills\": [\n    { \"skillId\": \"skill_node\", \"level\": 2, \"source\": \"MANUAL\" }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me/skills",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me", "skills"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"skills\": [\n    {\n      \"id\": \"user_skill_1\",\n      \"skillId\": \"skill_node\",\n      \"name\": \"Node.js\",\n      \"level\": 2,\n      \"source\": \"MANUAL\",\n      \"updatedAt\": \"2026-05-28T10:10:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Certifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me/certifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me", "certifications"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me/certifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me", "certifications"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"certifications\": [\n    {\n      \"id\": \"cert_1\",\n      \"name\": \"Intro to Backend APIs\",\n      \"issuer\": \"CareerFlow Academy\",\n      \"issuedAt\": \"2025-11-12T00:00:00.000Z\",\n      \"expiresAt\": null,\n      \"credentialUrl\": \"https://careerflow.local/certificates/backend-apis\",\n      \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Certification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me/certifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me", "certifications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Intro to Backend APIs\",\n  \"issuer\": \"CareerFlow Academy\",\n  \"issuedAt\": \"2025-11-12\",\n  \"credentialUrl\": \"https://careerflow.local/certificates/backend-apis\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me/certifications",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me", "certifications"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"certification\": {\n    \"id\": \"cert_1\",\n    \"name\": \"Intro to Backend APIs\",\n    \"issuer\": \"CareerFlow Academy\",\n    \"issuedAt\": \"2025-11-12T00:00:00.000Z\",\n    \"expiresAt\": null,\n    \"credentialUrl\": \"https://careerflow.local/certificates/backend-apis\",\n    \"updatedAt\": \"2026-05-28T10:00:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Certification",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/me/certifications/cert_1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "profile", "me", "certifications", "cert_1"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/profile/me/certifications/cert_1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "profile", "me", "certifications", "cert_1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Certification deleted.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Users",
       "item": [
         {

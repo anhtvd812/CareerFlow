@@ -12,6 +12,7 @@ const assessmentInclude = {
   classificationRules: {
     include: {
       classification: true,
+      career: true,
     },
   },
 };
@@ -215,6 +216,91 @@ export const listClassifications = () =>
         },
         orderBy: {
           priority: 'asc',
+        },
+      },
+    },
+  });
+
+// Roadmap operations for profile initialization
+export const findExistingRoadmap = (userId: string, careerId: string) =>
+  prisma.roadmap.findFirst({
+    where: {
+      userId,
+      careerId,
+    },
+    include: {
+      roadmapSkills: {
+        include: {
+          skill: true,
+        },
+      },
+      career: {
+        include: {
+          careerSkills: true,
+        },
+      },
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+
+export const createRoadmapWithSkills = async (params: {
+  userId: string;
+  careerId: string;
+  careerTitle: string;
+  careerDescription: string | null;
+  careerSkills: Array<{ skillId: string; level: number }>;
+}) => {
+  // Use transaction to ensure all-or-nothing creation
+  return prisma.$transaction(async (tx) => {
+    // Create Roadmap
+    const roadmap = await tx.roadmap.create({
+      data: {
+        userId: params.userId,
+        careerId: params.careerId,
+        title: `${params.careerTitle} Roadmap`,
+        summary: params.careerDescription,
+      },
+    });
+
+    // Create RoadmapSkills for all career skills
+    if (params.careerSkills.length > 0) {
+      await tx.roadmapSkill.createMany({
+        data: params.careerSkills.map((careerSkill) => ({
+          roadmapId: roadmap.id,
+          skillId: careerSkill.skillId,
+          targetLevel: careerSkill.level,
+          progress: 0,
+        })),
+      });
+    }
+
+    return roadmap;
+  });
+};
+
+export const getRoadmapWithSkills = (roadmapId: string) =>
+  prisma.roadmap.findUnique({
+    where: {
+      id: roadmapId,
+    },
+    include: {
+      roadmapSkills: {
+        include: {
+          skill: true,
+        },
+      },
+      career: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
     },
