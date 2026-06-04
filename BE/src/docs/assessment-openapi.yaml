@@ -1,0 +1,1813 @@
+openapi: 3.0.3
+info:
+  title: CareerFlow Assessment Module API
+  version: 1.0.0
+  description: |
+    Production-ready API documentation for assessment scoring, classification, and authentication.
+    All responses are JSON. Timestamps are ISO-8601 strings.
+servers:
+  - url: "{baseUrl}"
+    description: Default server
+    variables:
+      baseUrl:
+        default: http://localhost:3000
+        description: Base URL for the API
+security:
+  - bearerAuth: []
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Assessments
+    description: Assessment submission and results
+  - name: Attempts
+    description: Assessment attempt sessions
+  - name: Tests
+    description: Test attempt aliases
+  - name: Profile
+    description: User profile updates
+  - name: Users
+    description: User assessment history
+  - name: Classifications
+    description: Classification rule lookups
+  - name: Recommendations
+    description: Roadmap recommendation endpoints
+paths:
+  /api/tests/{testId}/start:
+    post:
+      tags: [Tests]
+      summary: Start test attempt
+      description: Alias of starting an assessment attempt.
+      parameters:
+        - name: testId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "asmt_core_it"
+      responses:
+        "201":
+          description: Attempt created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptCreateResponse"
+              examples:
+                success:
+                  value:
+                    attempt:
+                      id: "attempt_123"
+                      assessmentId: "asmt_core_it"
+                      userId: "user_demo"
+                      status: "IN_PROGRESS"
+                      startedAt: "2026-05-28T10:00:00.000Z"
+                      completedAt: null
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:00:00.000Z"
+                    assessment:
+                      id: "asmt_core_it"
+                      title: "Core IT Foundations"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+  /api/profile/me:
+    get:
+      tags: [Profile]
+      summary: Get my profile
+      description: Retrieve current profile, skills, and certifications.
+      responses:
+        "200":
+          description: Profile snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+              examples:
+                success:
+                  value:
+                    profile:
+                      id: "profile_123"
+                      userId: "user_demo"
+                      headline: "IT Student"
+                      bio: "Focused on backend engineering and system design."
+                      careerGoal: "Backend Engineer"
+                      careerGoalId: null
+                      careerGoalRef: null
+                      progressPercent: 0
+                      lastAssessmentResultId: null
+                      lastAssessmentTakenAt: null
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:00:00.000Z"
+                    skills:
+                      - id: "user_skill_1"
+                        skillId: "skill_node"
+                        name: "Node.js"
+                        level: 2
+                        source: "MANUAL"
+                        updatedAt: "2026-05-28T10:00:00.000Z"
+                    certifications:
+                      - id: "cert_1"
+                        name: "Intro to Backend APIs"
+                        issuer: "CareerFlow Academy"
+                        issuedAt: "2025-11-12T00:00:00.000Z"
+                        expiresAt: null
+                        credentialUrl: "https://careerflow.local/certificates/backend-apis"
+                        updatedAt: "2026-05-28T10:00:00.000Z"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+    patch:
+      tags: [Profile]
+      summary: Update my profile
+      description: Update headline, bio, and career goal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdateRequest"
+            examples:
+              default:
+                value:
+                  headline: "Backend Learner"
+                  bio: "Learning Node.js and databases."
+                  careerGoal: "Backend Engineer"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileUpdateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid:
+                  value:
+                    message: "Payload must be a JSON object."
+                    code: "VALIDATION_ERROR"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/skills:
+    put:
+      tags: [Profile]
+      summary: Update my skills
+      description: Upsert skill list for the user profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkillUpdateRequest"
+            examples:
+              default:
+                value:
+                  skills:
+                    - skillId: "skill_node"
+                      level: 2
+                      source: "MANUAL"
+      responses:
+        "200":
+          description: Skills updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillUpdateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid:
+                  value:
+                    message: "skills must be a non-empty array."
+                    code: "VALIDATION_ERROR"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/certifications:
+    get:
+      tags: [Profile]
+      summary: List my certifications
+      responses:
+        "200":
+          description: Certification list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationListResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Profile]
+      summary: Add certification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificationCreateRequest"
+            examples:
+              default:
+                value:
+                  name: "Intro to Backend APIs"
+                  issuer: "CareerFlow Academy"
+                  issuedAt: "2025-11-12"
+                  credentialUrl: "https://careerflow.local/certificates/backend-apis"
+      responses:
+        "201":
+          description: Certification created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationCreateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/certifications/{id}:
+    delete:
+      tags: [Profile]
+      summary: Delete certification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "cert_1"
+      responses:
+        "200":
+          description: Certification deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/assessments:
+    get:
+      tags: [Assessments]
+      summary: List assessments
+      description: Get available assessments for the frontend flow.
+      responses:
+        "200":
+          description: Assessment list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentListResponse"
+              examples:
+                success:
+                  value:
+                    assessments:
+                      - id: "asmt_core_it"
+                        title: "Core IT Foundations"
+                        description: "Baseline assessment covering problem solving, theory, and practical skills."
+                        questionCount: 4
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server:
+                  value:
+                    message: "Internal server error."
+                    code: "INTERNAL_SERVER_ERROR"
+  /api/assessments/{id}/questions:
+    get:
+      tags: [Assessments]
+      summary: Get assessment questions
+      description: Return the assessment questions for display (no correct answers included).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "asmt_core_it"
+      responses:
+        "200":
+          description: Assessment questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentQuestionsResponse"
+              examples:
+                success:
+                  value:
+                    id: "asmt_core_it"
+                    title: "Core IT Foundations"
+                    description: "Baseline assessment covering problem solving, theory, and practical skills."
+                    questions:
+                      - id: "q1"
+                        prompt: "Which data structure follows LIFO ordering?"
+                        type: "MULTIPLE_CHOICE"
+                        weight: 3
+                        skillCategory:
+                          id: "cat_problem_solving"
+                          name: "Problem Solving"
+                        choices:
+                          - id: "c1"
+                            label: "Queue"
+                            value: "queue"
+                          - id: "c2"
+                            label: "Stack"
+                            value: "stack"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    message: "Assessment not found."
+                    code: "ASSESSMENT_NOT_FOUND"
+  /api/assessments/{id}/attempts:
+    post:
+      tags: [Attempts]
+      summary: Start attempt
+      description: Create an assessment attempt session for the authenticated user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "asmt_core_it"
+      responses:
+        "201":
+          description: Attempt created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptCreateResponse"
+              examples:
+                success:
+                  value:
+                    attempt:
+                      id: "attempt_123"
+                      assessmentId: "asmt_core_it"
+                      userId: "user_demo"
+                      status: "IN_PROGRESS"
+                      startedAt: "2026-05-28T10:00:00.000Z"
+                      completedAt: null
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:00:00.000Z"
+                    assessment:
+                      id: "asmt_core_it"
+                      title: "Core IT Foundations"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    message: "Assessment not found."
+                    code: "ASSESSMENT_NOT_FOUND"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+  /api/assessments/attempts/{id}:
+    patch:
+      tags: [Attempts]
+      summary: Save attempt answers
+      description: Save or update attempt answers (partial progress).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "attempt_123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttemptSaveRequest"
+            examples:
+              default:
+                value:
+                  answers:
+                    - questionId: "q1"
+                      choiceId: "c2"
+                    - questionId: "q3"
+                      answerText: "npm"
+      responses:
+        "200":
+          description: Attempt saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptSaveResponse"
+              examples:
+                success:
+                  value:
+                    attempt:
+                      id: "attempt_123"
+                      assessmentId: "asmt_core_it"
+                      userId: "user_demo"
+                      status: "IN_PROGRESS"
+                      startedAt: "2026-05-28T10:00:00.000Z"
+                      completedAt: null
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:05:00.000Z"
+                    savedCount: 2
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                validation:
+                  value:
+                    message: "answers must be a non-empty array."
+                    code: "VALIDATION_ERROR"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                forbidden:
+                  value:
+                    message: "Not allowed to update this attempt."
+                    code: "ATTEMPT_FORBIDDEN"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    message: "Assessment attempt not found."
+                    code: "ATTEMPT_NOT_FOUND"
+        "409":
+          description: Attempt already submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                conflict:
+                  value:
+                    message: "Attempt already submitted."
+                    code: "ATTEMPT_FINALIZED"
+  /api/assessments/attempts/{id}/submit:
+    post:
+      tags: [Attempts]
+      summary: Submit attempt
+      description: |
+        Finalize attempt, score answers, and return result.
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "attempt_123"
+      responses:
+        "201":
+          description: Attempt submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttemptSubmitResponse"
+              examples:
+                success:
+                  value:
+                    attempt:
+                      id: "attempt_123"
+                      assessmentId: "asmt_core_it"
+                      userId: "user_demo"
+                      status: "SUBMITTED"
+                      startedAt: "2026-05-28T10:00:00.000Z"
+                      completedAt: "2026-05-28T10:10:00.000Z"
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:10:00.000Z"
+                    result:
+                      id: "result_123"
+                      assessment:
+                        id: "asmt_core_it"
+                        title: "Core IT Foundations"
+                      userId: "user_demo"
+                      classification: null
+                      scores:
+                        totalScore: 3
+                        maxScore: 10
+                        percentage: 30
+                        correctCount: 1
+                        incorrectCount: 2
+                      summary: "Assessment completed with 30% overall score."
+                      categoryScores: []
+                      answers: []
+                      createdAt: "2026-05-28T10:00:00.000Z"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                forbidden:
+                  value:
+                    message: "Not allowed to submit this attempt."
+                    code: "ATTEMPT_FORBIDDEN"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    message: "Assessment attempt not found."
+                    code: "ATTEMPT_NOT_FOUND"
+        "409":
+          description: Attempt already submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                conflict:
+                  value:
+                    message: "Attempt already submitted."
+                    code: "ATTEMPT_FINALIZED"
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a user
+      description: Create a basic user account for testing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRegisterRequest"
+            examples:
+              default:
+                value:
+                  name: "Demo User"
+                  email: "demo@careerflow.local"
+                  password: "demo_password"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthRegisterResponse"
+              examples:
+                success:
+                  value:
+                    user:
+                      id: "user_123"
+                      name: "Demo User"
+                      email: "demo@careerflow.local"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                validation:
+                  value:
+                    message: "email is required."
+                    code: "VALIDATION_ERROR"
+                    details:
+                      field: "email"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                conflict:
+                  value:
+                    message: "Email already exists."
+                    code: "EMAIL_ALREADY_EXISTS"
+      security: []
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      description: Login and get a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+            examples:
+              default:
+                value:
+                  email: "demo@careerflow.local"
+                  password: "demo_password"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLoginResponse"
+              examples:
+                success:
+                  value:
+                    token: "<JWT_TOKEN>"
+                    user:
+                      id: "user_123"
+                      name: "Demo User"
+                      email: "demo@careerflow.local"
+                      role: "STUDENT"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                unauthorized:
+                  value:
+                    message: "Invalid email or password."
+                    code: "INVALID_CREDENTIALS"
+      security: []
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      description: Logout (client should discard token).
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutResponse"
+              examples:
+                success:
+                  value:
+                    message: "Logged out."
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+  /api/assessments/submit:
+    post:
+      tags: [Assessments]
+      summary: Submit assessment
+      deprecated: true
+      description: |
+        Submit answers and generate a scored assessment result.
+        Deprecated: prefer attempt-based flow (/api/assessments/:id/attempts and /api/assessments/attempts/:id/submit).
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
+        
+        Validation rules:
+        - assessmentId is required
+        - answers must be a non-empty array
+        - each answer must include questionId and either choiceId or answerText
+        - duplicate questionId values are rejected
+        - missing answers for any question are rejected
+        - choiceId must belong to the question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitAssessmentRequest"
+            examples:
+              default:
+                value:
+                  assessmentId: "asmt_core_it"
+                  userId: "user_demo"
+                  answers:
+                    - questionId: "q1"
+                      choiceId: "c2"
+                    - questionId: "q2"
+                      choiceId: "c5"
+                    - questionId: "q3"
+                      answerText: "npm"
+                    - questionId: "q4"
+                      answerText: "Representational State Transfer"
+      responses:
+        "201":
+          description: Result created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentResultResponse"
+              examples:
+                success:
+                  value:
+                    id: "result_123"
+                    assessment:
+                      id: "asmt_core_it"
+                      title: "Core IT Foundations"
+                    userId: "user_demo"
+                    classification:
+                      id: "class_strong_problem_solver"
+                      name: "Strong Problem Solver"
+                      description: "High analytical scores with solid overall performance."
+                    scores:
+                      totalScore: 10
+                      maxScore: 10
+                      percentage: 100
+                      correctCount: 4
+                      incorrectCount: 0
+                    summary: "Strong Problem Solver with 100% overall score."
+                    categoryScores:
+                      - id: "cat_problem_solving"
+                        name: "Problem Solving"
+                        score: 3
+                        maxScore: 3
+                        percentage: 100
+                      - id: "cat_theory"
+                        name: "Theory"
+                        score: 5
+                        maxScore: 5
+                        percentage: 100
+                      - id: "cat_practical"
+                        name: "Practical"
+                        score: 2
+                        maxScore: 2
+                        percentage: 100
+                    answers:
+                      - questionId: "q1"
+                        prompt: "Which data structure follows LIFO ordering?"
+                        type: "MULTIPLE_CHOICE"
+                        selectedChoice:
+                          id: "c2"
+                          label: "Stack"
+                          value: "stack"
+                        answerText: null
+                        isCorrect: true
+                        score: 3
+                    createdAt: "2026-05-28T10:00:00.000Z"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing answers for some questions."
+                    code: "VALIDATION_ERROR"
+                    details:
+                      missingQuestionIds: ["q3"]
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+  /api/assessments/results/{id}:
+    get:
+      tags: [Assessments]
+      summary: Get assessment result
+      description: Retrieve a scored assessment result by id.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "result_123"
+      responses:
+        "200":
+          description: Result details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssessmentResultResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                notFound:
+                  value:
+                    message: "Assessment result not found."
+                    code: "RESULT_NOT_FOUND"
+      security: []
+  /api/users/{id}/assessments:
+    get:
+      tags: [Users]
+      summary: Get user assessment history
+      description: List all assessment results for a user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "user_demo"
+      responses:
+        "200":
+          description: History results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserAssessmentHistoryResponse"
+              examples:
+                success:
+                  value:
+                    userId: "user_demo"
+                    results:
+                      - id: "result_123"
+                        assessment:
+                          id: "asmt_core_it"
+                          title: "Core IT Foundations"
+                        userId: "user_demo"
+                        classification: null
+                        scores:
+                          totalScore: 3
+                          maxScore: 10
+                          percentage: 30
+                          correctCount: 1
+                          incorrectCount: 2
+                        summary: "Assessment completed with 30% overall score."
+                        categoryScores: []
+                        answers: []
+                        createdAt: "2026-05-28T10:00:00.000Z"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+  /api/assessments/classifications:
+    get:
+      tags: [Classifications]
+      summary: List classification rules
+      description: Get classification definitions and rules.
+      responses:
+        "200":
+          description: Classification list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassificationListResponse"
+              examples:
+                success:
+                  value:
+                    classifications:
+                      - id: "class_strong_problem_solver"
+                        name: "Strong Problem Solver"
+                        description: "High analytical scores with solid overall performance."
+                        isDefault: false
+                        rules:
+                          - id: "rule_strong_problem_solver"
+                            assessment:
+                              id: "asmt_core_it"
+                              title: "Core IT Foundations"
+                            priority: 1
+                            minPercentage: 80
+                            maxPercentage: null
+                            minCorrect: null
+                            maxIncorrect: null
+                            minCategoryPercentages:
+                              cat_problem_solving: 0.8
+                            maxCategoryPercentages: null
+        "500":
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server:
+                  value:
+                    message: "Internal server error."
+                    code: "INTERNAL_SERVER_ERROR"
+      security: []
+  /api/recommendations/roadmap:
+    post:
+      tags: [Recommendations]
+      summary: Recommend learning roadmap
+      description: Generate and persist a personalized roadmap from a career goal plus current level, current skills, or an assessment result.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoadmapRecommendationRequest"
+            examples:
+              byLevelAndSkills:
+                value:
+                  careerGoal: "Data Science"
+                  currentLevel: "beginner"
+                  currentSkills: ["Python"]
+              byAssessmentResult:
+                value:
+                  careerGoal: "Data Science"
+                  assessmentResultId: "result_123"
+      responses:
+        "201":
+          description: Roadmap recommendation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoadmapRecommendationResponse"
+              examples:
+                success:
+                  value:
+                    roadmapId: "roadmap_123"
+                    career:
+                      id: "career_data_science"
+                      title: "Data Science"
+                    summary: "Personalized roadmap for Data Science based on 2 skill gaps."
+                    skillGaps:
+                      - id: "skill_sql"
+                        name: "SQL"
+                        currentLevel: 0
+                        targetLevel: 2
+                    stages:
+                      - order: 2
+                        title: "Practice"
+                        knowledge:
+                          - skillId: "skill_sql"
+                            skillName: "SQL"
+                            description: "Query relational databases and shape analytical datasets."
+                            courses:
+                              - id: "course_sql_analytics"
+                                title: "SQL for Analytics"
+                                description: "Practice joins, grouping, filtering, subqueries, and analytical reporting queries."
+                                difficulty: "intermediate"
+                                estimatedHours: 10
+                                url: null
+                        miniProjects:
+                          - id: "project_sql_customer_segments"
+                            title: "Customer Segmentation SQL Report"
+                            description: "Write SQL queries that segment customers by purchase frequency and total spend."
+                            difficulty: "intermediate"
+                            estimatedHours: 6
+                            instructions: "Create joins across customers, orders, and order items, then summarize the top segments."
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: No matching roadmap or assessment result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Database unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Example: Authorization: Bearer <JWT_TOKEN>
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [message, code]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    AuthRegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+    AuthRegisterResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: "#/components/schemas/UserSummary"
+    AuthLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+    AuthLoginResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserDetail"
+    LogoutResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    RoadmapRecommendationRequest:
+      type: object
+      required: [careerGoal]
+      properties:
+        careerGoal:
+          type: string
+          minLength: 1
+          example: "Data Science"
+        currentLevel:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "beginner"
+        currentSkills:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          example: ["Python"]
+        assessmentResultId:
+          type: string
+          example: "result_123"
+      anyOf:
+        - required: [currentLevel]
+        - required: [currentSkills]
+        - required: [assessmentResultId]
+    RoadmapRecommendationResponse:
+      type: object
+      required: [roadmapId, career, summary, skillGaps, stages]
+      properties:
+        roadmapId:
+          type: string
+        career:
+          $ref: "#/components/schemas/RoadmapCareer"
+        summary:
+          type: string
+        skillGaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapSkillGap"
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapStage"
+    RoadmapCareer:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    RoadmapSkillGap:
+      type: object
+      required: [id, name, currentLevel, targetLevel]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        currentLevel:
+          type: integer
+        targetLevel:
+          type: integer
+    RoadmapStage:
+      type: object
+      required: [order, title, knowledge, miniProjects]
+      properties:
+        order:
+          type: integer
+        title:
+          type: string
+        knowledge:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapKnowledgeItem"
+        miniProjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapMiniProject"
+    RoadmapKnowledgeItem:
+      type: object
+      required: [skillId, skillName, courses]
+      properties:
+        skillId:
+          type: string
+        skillName:
+          type: string
+        description:
+          type: string
+          nullable: true
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapCourse"
+    RoadmapCourse:
+      type: object
+      required: [id, title, difficulty]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        estimatedHours:
+          type: integer
+          nullable: true
+        url:
+          type: string
+          nullable: true
+    RoadmapMiniProject:
+      type: object
+      required: [id, title, difficulty]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        estimatedHours:
+          type: integer
+          nullable: true
+        instructions:
+          type: string
+          nullable: true
+    SubmitAssessmentRequest:
+      type: object
+      required: [assessmentId, answers]
+      properties:
+        assessmentId:
+          type: string
+        userId:
+          type: string
+          description: Optional when authenticated; required for prototype mode.
+        answers:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SubmitAnswer"
+    SubmitAnswer:
+      type: object
+      required: [questionId]
+      properties:
+        questionId:
+          type: string
+        choiceId:
+          type: string
+        answerText:
+          type: string
+      description: choiceId for multiple-choice, answerText for text questions.
+    ProfileResponse:
+      type: object
+      required: [profile, skills, certifications]
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileSummary"
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSkill"
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationSummary"
+    ProfileSummary:
+      type: object
+      required: [id, userId, progressPercent, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        careerGoal:
+          type: string
+          nullable: true
+        careerGoalId:
+          type: string
+          nullable: true
+        careerGoalRef:
+          oneOf:
+            - $ref: "#/components/schemas/CareerSummary"
+            - type: "null"
+        progressPercent:
+          type: number
+          format: float
+        lastAssessmentResultId:
+          type: string
+          nullable: true
+        lastAssessmentTakenAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        careerGoal:
+          type: string
+          nullable: true
+        careerGoalId:
+          type: string
+          nullable: true
+    ProfileUpdateResponse:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileSummary"
+    ProfileSkill:
+      type: object
+      required: [id, skillId, name, level, source, updatedAt]
+      properties:
+        id:
+          type: string
+        skillId:
+          type: string
+        name:
+          type: string
+        level:
+          type: integer
+        source:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    SkillUpdateRequest:
+      type: object
+      required: [skills]
+      properties:
+        skills:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SkillUpdateItem"
+    SkillUpdateItem:
+      type: object
+      required: [skillId, level]
+      properties:
+        skillId:
+          type: string
+        level:
+          type: integer
+        source:
+          type: string
+    SkillUpdateResponse:
+      type: object
+      required: [skills]
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSkill"
+    CertificationSummary:
+      type: object
+      required: [id, name, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        issuer:
+          type: string
+          nullable: true
+        issuedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        credentialUrl:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+    CertificationCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        issuer:
+          type: string
+          nullable: true
+        issuedAt:
+          type: string
+          format: date
+          nullable: true
+        expiresAt:
+          type: string
+          format: date
+          nullable: true
+        credentialUrl:
+          type: string
+          nullable: true
+    CertificationCreateResponse:
+      type: object
+      required: [certification]
+      properties:
+        certification:
+          $ref: "#/components/schemas/CertificationSummary"
+    CertificationListResponse:
+      type: object
+      required: [certifications]
+      properties:
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationSummary"
+    AssessmentListResponse:
+      type: object
+      required: [assessments]
+      properties:
+        assessments:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentListItem"
+    AssessmentListItem:
+      type: object
+      required: [id, title, description, questionCount]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        questionCount:
+          type: integer
+    AssessmentQuestionsResponse:
+      type: object
+      required: [id, title, description, questions]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentQuestion"
+    AssessmentQuestion:
+      type: object
+      required: [id, prompt, type, weight, choices]
+      properties:
+        id:
+          type: string
+        prompt:
+          type: string
+        type:
+          type: string
+        weight:
+          type: number
+          format: float
+        skillCategory:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/SkillCategorySummary"
+        choices:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentChoice"
+    AssessmentChoice:
+      type: object
+      required: [id, label, value]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        value:
+          type: string
+    SkillCategorySummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    AttemptSummary:
+      type: object
+      required: [id, assessmentId, userId, status, startedAt, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        assessmentId:
+          type: string
+        userId:
+          type: string
+        status:
+          type: string
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AttemptCreateResponse:
+      type: object
+      required: [attempt, assessment]
+      properties:
+        attempt:
+          $ref: "#/components/schemas/AttemptSummary"
+        assessment:
+          $ref: "#/components/schemas/AssessmentSummary"
+    AttemptSaveRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SubmitAnswer"
+    AttemptSaveResponse:
+      type: object
+      required: [attempt, savedCount]
+      properties:
+        attempt:
+          $ref: "#/components/schemas/AttemptSummary"
+        savedCount:
+          type: integer
+    AttemptSubmitResponse:
+      type: object
+      required: [attempt, result]
+      properties:
+        attempt:
+          $ref: "#/components/schemas/AttemptSummary"
+        result:
+          $ref: "#/components/schemas/AssessmentResultResponse"
+    AssessmentResultResponse:
+      type: object
+      required: [id, assessment, userId, scores, summary, categoryScores, answers, createdAt]
+      properties:
+        id:
+          type: string
+        assessment:
+          $ref: "#/components/schemas/AssessmentSummary"
+        userId:
+          type: string
+        classification:
+          oneOf:
+            - $ref: "#/components/schemas/ClassificationSummary"
+            - type: "null"
+        scores:
+          $ref: "#/components/schemas/ScoreSummary"
+        summary:
+          type: string
+        categoryScores:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryScore"
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoredAnswer"
+        createdAt:
+          type: string
+          format: date-time
+    UserAssessmentHistoryResponse:
+      type: object
+      required: [userId, results]
+      properties:
+        userId:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/AssessmentResultResponse"
+    ClassificationListResponse:
+      type: object
+      required: [classifications]
+      properties:
+        classifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassificationDetail"
+    AssessmentSummary:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    CareerSummary:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    UserSummary:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+    UserDetail:
+      allOf:
+        - $ref: "#/components/schemas/UserSummary"
+        - type: object
+          properties:
+            role:
+              type: string
+    ClassificationSummary:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    ClassificationDetail:
+      type: object
+      required: [id, name, isDefault, rules]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        isDefault:
+          type: boolean
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClassificationRule"
+    ClassificationRule:
+      type: object
+      required: [id, assessment, priority]
+      properties:
+        id:
+          type: string
+        assessment:
+          $ref: "#/components/schemas/AssessmentSummary"
+        priority:
+          type: integer
+        minPercentage:
+          type: number
+          format: float
+          nullable: true
+        maxPercentage:
+          type: number
+          format: float
+          nullable: true
+        minCorrect:
+          type: integer
+          nullable: true
+        maxIncorrect:
+          type: integer
+          nullable: true
+        minCategoryPercentages:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+        maxCategoryPercentages:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          nullable: true
+    ScoreSummary:
+      type: object
+      required: [totalScore, maxScore, percentage, correctCount, incorrectCount]
+      properties:
+        totalScore:
+          type: number
+          format: float
+        maxScore:
+          type: number
+          format: float
+        percentage:
+          type: number
+          format: float
+        correctCount:
+          type: integer
+        incorrectCount:
+          type: integer
+    CategoryScore:
+      type: object
+      required: [id, name, score, maxScore, percentage]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        score:
+          type: number
+          format: float
+        maxScore:
+          type: number
+          format: float
+        percentage:
+          type: number
+          format: float
+    ScoredAnswer:
+      type: object
+      required: [questionId, prompt, type, isCorrect, score]
+      properties:
+        questionId:
+          type: string
+        prompt:
+          type: string
+        type:
+          type: string
+        selectedChoice:
+          oneOf:
+            - $ref: "#/components/schemas/ChoiceSummary"
+            - type: "null"
+        answerText:
+          type: string
+          nullable: true
+        isCorrect:
+          type: boolean
+        score:
+          type: number
+          format: float
+    ChoiceSummary:
+      type: object
+      required: [id, label, value]
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        value:
+          type: string

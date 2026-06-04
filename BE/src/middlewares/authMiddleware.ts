@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { getEnv } from '../utils/env';
+import { ApiError } from '../utils/errors';
 
 export const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Missing authentication token.' });
+    return next(new ApiError(401, 'AUTH_REQUIRED', 'Missing authentication token.'));
   }
 
   const token = header.replace('Bearer ', '').trim();
@@ -15,6 +16,6 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     req.user = decoded;
     return next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid authentication token.' });
+    return next(new ApiError(401, 'AUTH_INVALID', 'Invalid authentication token.'));
   }
 };

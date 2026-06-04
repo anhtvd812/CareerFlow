@@ -1,23 +1,14 @@
-import type { NextFunction, Request, Response } from 'express';
+export type ErrorDetails = Record<string, unknown>;
 
-export class AppError extends Error {
+export class ApiError extends Error {
   statusCode: number;
+  code: string;
+  details?: ErrorDetails;
 
-  constructor(statusCode: number, message: string) {
+  constructor(statusCode: number, code: string, message: string, details?: ErrorDetails) {
     super(message);
     this.statusCode = statusCode;
+    this.code = code;
+    this.details = details;
   }
 }
-
-export const asyncHandler =
-  (handler: (req: Request, res: Response, next: NextFunction) => Promise<void>) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    handler(req, res, next).catch(next);
-  };
-
-export const notFound = (message = 'Resource not found.') => new AppError(404, message);
-
-export const forbidden = (message = 'You do not have permission to access this resource.') =>
-  new AppError(403, message);
-
-export const badRequest = (message = 'Invalid request.') => new AppError(400, message);
