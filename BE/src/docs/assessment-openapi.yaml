@@ -23,6 +23,8 @@ tags:
     description: Assessment attempt sessions
   - name: Tests
     description: Test attempt aliases
+  - name: Profile
+    description: User profile updates
   - name: Users
     description: User assessment history
   - name: Classifications
@@ -75,6 +77,224 @@ paths:
                   value:
                     message: "Missing authentication token."
                     code: "AUTH_REQUIRED"
+  /api/profile/me:
+    get:
+      tags: [Profile]
+      summary: Get my profile
+      description: Retrieve current profile, skills, and certifications.
+      responses:
+        "200":
+          description: Profile snapshot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+              examples:
+                success:
+                  value:
+                    profile:
+                      id: "profile_123"
+                      userId: "user_demo"
+                      headline: "IT Student"
+                      bio: "Focused on backend engineering and system design."
+                      careerGoal: "Backend Engineer"
+                      careerGoalId: null
+                      careerGoalRef: null
+                      progressPercent: 0
+                      lastAssessmentResultId: null
+                      lastAssessmentTakenAt: null
+                      createdAt: "2026-05-28T10:00:00.000Z"
+                      updatedAt: "2026-05-28T10:00:00.000Z"
+                    skills:
+                      - id: "user_skill_1"
+                        skillId: "skill_node"
+                        name: "Node.js"
+                        level: 2
+                        source: "MANUAL"
+                        updatedAt: "2026-05-28T10:00:00.000Z"
+                    certifications:
+                      - id: "cert_1"
+                        name: "Intro to Backend APIs"
+                        issuer: "CareerFlow Academy"
+                        issuedAt: "2025-11-12T00:00:00.000Z"
+                        expiresAt: null
+                        credentialUrl: "https://careerflow.local/certificates/backend-apis"
+                        updatedAt: "2026-05-28T10:00:00.000Z"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing:
+                  value:
+                    message: "Missing authentication token."
+                    code: "AUTH_REQUIRED"
+    patch:
+      tags: [Profile]
+      summary: Update my profile
+      description: Update headline, bio, and career goal.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdateRequest"
+            examples:
+              default:
+                value:
+                  headline: "Backend Learner"
+                  bio: "Learning Node.js and databases."
+                  careerGoal: "Backend Engineer"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileUpdateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid:
+                  value:
+                    message: "Payload must be a JSON object."
+                    code: "VALIDATION_ERROR"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/skills:
+    put:
+      tags: [Profile]
+      summary: Update my skills
+      description: Upsert skill list for the user profile.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SkillUpdateRequest"
+            examples:
+              default:
+                value:
+                  skills:
+                    - skillId: "skill_node"
+                      level: 2
+                      source: "MANUAL"
+      responses:
+        "200":
+          description: Skills updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillUpdateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalid:
+                  value:
+                    message: "skills must be a non-empty array."
+                    code: "VALIDATION_ERROR"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/certifications:
+    get:
+      tags: [Profile]
+      summary: List my certifications
+      responses:
+        "200":
+          description: Certification list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationListResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Profile]
+      summary: Add certification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificationCreateRequest"
+            examples:
+              default:
+                value:
+                  name: "Intro to Backend APIs"
+                  issuer: "CareerFlow Academy"
+                  issuedAt: "2025-11-12"
+                  credentialUrl: "https://careerflow.local/certificates/backend-apis"
+      responses:
+        "201":
+          description: Certification created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificationCreateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/profile/me/certifications/{id}:
+    delete:
+      tags: [Profile]
+      summary: Delete certification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "cert_1"
+      responses:
+        "200":
+          description: Certification deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/assessments:
     get:
       tags: [Assessments]
@@ -307,7 +527,10 @@ paths:
     post:
       tags: [Attempts]
       summary: Submit attempt
-      description: Finalize attempt, score answers, and return result.
+      description: |
+        Finalize attempt, score answers, and return result.
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
       parameters:
         - name: id
           in: path
@@ -519,6 +742,9 @@ paths:
       description: |
         Submit answers and generate a scored assessment result.
         Deprecated: prefer attempt-based flow (/api/assessments/:id/attempts and /api/assessments/attempts/:id/submit).
+        
+        Side Effect: If the assessment result gets classified with a career, the user's learning profile (Roadmap) is automatically initialized with suggested skills and goals.
+        
         Validation rules:
         - assessmentId is required
         - answers must be a non-empty array
@@ -859,6 +1085,12 @@ components:
         details:
           type: object
           additionalProperties: true
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
     AuthRegisterRequest:
       type: object
       required: [name, email, password]
@@ -1060,6 +1292,184 @@ components:
         answerText:
           type: string
       description: choiceId for multiple-choice, answerText for text questions.
+    ProfileResponse:
+      type: object
+      required: [profile, skills, certifications]
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileSummary"
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSkill"
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationSummary"
+    ProfileSummary:
+      type: object
+      required: [id, userId, progressPercent, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        careerGoal:
+          type: string
+          nullable: true
+        careerGoalId:
+          type: string
+          nullable: true
+        careerGoalRef:
+          oneOf:
+            - $ref: "#/components/schemas/CareerSummary"
+            - type: "null"
+        progressPercent:
+          type: number
+          format: float
+        lastAssessmentResultId:
+          type: string
+          nullable: true
+        lastAssessmentTakenAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProfileUpdateRequest:
+      type: object
+      properties:
+        headline:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        careerGoal:
+          type: string
+          nullable: true
+        careerGoalId:
+          type: string
+          nullable: true
+    ProfileUpdateResponse:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          $ref: "#/components/schemas/ProfileSummary"
+    ProfileSkill:
+      type: object
+      required: [id, skillId, name, level, source, updatedAt]
+      properties:
+        id:
+          type: string
+        skillId:
+          type: string
+        name:
+          type: string
+        level:
+          type: integer
+        source:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+    SkillUpdateRequest:
+      type: object
+      required: [skills]
+      properties:
+        skills:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SkillUpdateItem"
+    SkillUpdateItem:
+      type: object
+      required: [skillId, level]
+      properties:
+        skillId:
+          type: string
+        level:
+          type: integer
+        source:
+          type: string
+    SkillUpdateResponse:
+      type: object
+      required: [skills]
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSkill"
+    CertificationSummary:
+      type: object
+      required: [id, name, updatedAt]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        issuer:
+          type: string
+          nullable: true
+        issuedAt:
+          type: string
+          format: date-time
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        credentialUrl:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          format: date-time
+    CertificationCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        issuer:
+          type: string
+          nullable: true
+        issuedAt:
+          type: string
+          format: date
+          nullable: true
+        expiresAt:
+          type: string
+          format: date
+          nullable: true
+        credentialUrl:
+          type: string
+          nullable: true
+    CertificationCreateResponse:
+      type: object
+      required: [certification]
+      properties:
+        certification:
+          $ref: "#/components/schemas/CertificationSummary"
+    CertificationListResponse:
+      type: object
+      required: [certifications]
+      properties:
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/CertificationSummary"
     AssessmentListResponse:
       type: object
       required: [assessments]
@@ -1241,6 +1651,14 @@ components:
           items:
             $ref: "#/components/schemas/ClassificationDetail"
     AssessmentSummary:
+      type: object
+      required: [id, title]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    CareerSummary:
       type: object
       required: [id, title]
       properties:

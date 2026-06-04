@@ -2,17 +2,17 @@
 node_modules/
 **/node_modules/
 
-# Build output
-dist/
-**/dist/
-build/
-coverage/
-
 # Environment files
 .env
 .env.*
 !.env.example
 !*.env.example
+
+# Build output
+dist/
+**/dist/
+build/
+coverage/
 
 # Logs
 *.log
