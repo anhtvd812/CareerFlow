@@ -5,6 +5,7 @@ import careerRoutes from './careerRoutes';
 import chatRoutes from './chatRoutes';
 import healthRoutes from './healthRoutes';
 import mentorRoutes from './mentorRoutes';
+import roadmapRoutes from './roadmapRoutes';
 
 import recommendationRoutes from './recommendationRoutes';
 
@@ -21,6 +22,7 @@ router.use('/auth', authRoutes);
 router.use('/assessments', assessmentRoutes);
 router.use('/careers', careerRoutes);
 router.use('/mentors', mentorRoutes);
+router.use('/roadmap', roadmapRoutes);
 router.use('/recommendations', recommendationRoutes);
 router.use('/skills', skillsRoutes);
 router.use('/profile', profileRoutes);
